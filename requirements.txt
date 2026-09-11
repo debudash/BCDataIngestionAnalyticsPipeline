@@ -6,6 +6,7 @@ requests>=2.31
 cryptography>=42.0          # key-pair auth for the Stage 1 raw load
 
 # Stages 2-4 (transform, validate, de-identify) — dbt on Snowflake
-dbt-core>=1.7,<1.9
-dbt-snowflake>=1.7,<1.9
+# dbt 1.9+ required for Python 3.13 support.
+dbt-core>=1.9,<2.0
+dbt-snowflake>=1.9,<2.0
 # dbt packages (dbt_utils, dbt_expectations) are installed via `dbt deps` from packages.yml
