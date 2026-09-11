@@ -1,0 +1,18 @@
+version: 2
+
+models:
+  - name: person_deid
+    description: Safe Harbor de-identified PERSON. No names, no source ids, birth year only.
+    columns:
+      - name: person_id
+        tests: [not_null, unique]
+      - name: year_of_birth
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1936        # 2026 - 90: nobody older than the Safe Harbor cap
+              max_value: 2026
+              row_condition: "year_of_birth is not null"
+  - name: unique_patients
+    columns:
+      - name: person_id
+        tests: [not_null, unique]

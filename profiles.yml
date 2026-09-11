@@ -1,0 +1,19 @@
+# dbt connection profile. Reuses the same env vars as .env (Stage 1).
+# The orchestrator loads .env into the environment before invoking dbt, so
+# env_var() resolves. To run dbt by hand: `set -a; source .env; set +a; dbt build`.
+# dbt looks in ~/.dbt by default — either copy this there or set DBT_PROFILES_DIR=.
+breast_cancer_omop:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'SYSADMIN') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'COMPUTE_WH') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
+      # Key-pair auth — no password in the profile.
+      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH') }}"
+      private_key_passphrase: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE', '') }}"
+      schema: OMOP          # default; per-folder schemas set in dbt_project.yml
+      threads: 4

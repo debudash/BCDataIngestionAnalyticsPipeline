@@ -1,0 +1,39 @@
+name: breast_cancer_omop
+version: "1.0.0"
+config-version: 2
+profile: breast_cancer_omop
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+# Layering mirrors the pipeline lifecycle stages.
+#   staging  -> views cleaning RAW           (Stage 2 input)
+#   omop     -> OMOP CDM v5.4 marts (tables)  (Stage 2)
+#   genomic  -> parallel non-OMOP layer       (Stage 2, parallel)
+#   analytics-> Safe Harbor de-identified base (Stage 4)
+# Stage 3 (validation) is expressed as dbt tests in the *_.yml files, not a folder.
+models:
+  breast_cancer_omop:
+    staging:
+      +materialized: view
+      +schema: staging
+    omop:
+      +materialized: table
+      +schema: omop
+    genomic:
+      +materialized: table
+      +schema: genomic
+    analytics:
+      +materialized: table
+      +schema: analytics
+
+seeds:
+  breast_cancer_omop:
+    concept_map:
+      +schema: omop
+      +column_types:
+        concept_id: integer

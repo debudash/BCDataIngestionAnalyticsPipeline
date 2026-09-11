@@ -1,0 +1,69 @@
+version: 2
+
+# Stage 3 (Data Quality & Integrity) lives here as dbt tests, grouped by the OHDSI DQD
+# categories: conformance, completeness, plausibility. `dbt test` is the validation run.
+models:
+  - name: person
+    description: OMOP PERSON — one row per unique patient.
+    columns:
+      - name: person_id
+        tests: [not_null, unique]                       # conformance
+      - name: gender_concept_id
+        tests:
+          - not_null                                    # conformance
+          - accepted_values:
+              values: [8507, 8532, 0]
+      - name: year_of_birth
+        tests:                                          # plausibility
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1900
+              max_value: 2026
+              row_condition: "year_of_birth is not null"   # real sources lack a birth date
+
+  - name: condition_occurrence
+    columns:
+      - name: condition_occurrence_id
+        tests: [not_null, unique]
+      - name: person_id
+        tests:
+          - not_null
+          - relationships:                              # conformance (FK integrity)
+              to: ref('person')
+              field: person_id
+      - name: condition_concept_id
+        tests:
+          - dbt_utils.expression_is_true:               # completeness (mapped, not 0)
+              expression: "!= 0"
+              config: { severity: warn }
+
+  - name: measurement
+    columns:
+      - name: person_id
+        tests:
+          - relationships: { to: ref('person'), field: person_id }
+      - name: value_as_number
+        tests:
+          - not_null: { config: { severity: warn } }    # completeness
+
+  - name: death
+    columns:
+      - name: person_id
+        tests:
+          - not_null
+          - relationships: { to: ref('person'), field: person_id }
+
+  - name: visit_occurrence
+    columns:
+      - name: visit_concept_id
+        tests:
+          - accepted_values: { values: [9201, 9202, 9203, 0] }
+
+  - name: observation
+    description: Real-source attributes (stage, grade, vital status, age) not modeled as measurements.
+    columns:
+      - name: observation_id
+        tests: [not_null, unique]
+      - name: person_id
+        tests:
+          - not_null
+          - relationships: { to: ref('person'), field: person_id }

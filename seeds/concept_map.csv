@@ -1,0 +1,34 @@
+source,source_field,source_value,omop_table,omop_field,target_domain,target_vocabulary,source_code,concept_id,review_status,notes
+synthea,patients.Id,,person,person_id,,,,,STANDARD,Surrogate person_id assigned in dbt; original Id kept in person_source_value.
+synthea,patients.GENDER,F,person,gender_concept_id,Gender,Gender,F,8532,STANDARD,OMOP standard concept FEMALE.
+synthea,patients.GENDER,M,person,gender_concept_id,Gender,Gender,M,8507,STANDARD,OMOP standard concept MALE.
+synthea,patients.RACE,white,person,race_concept_id,Race,Race,white,8527,STANDARD,White.
+synthea,patients.RACE,black,person,race_concept_id,Race,Race,black,8516,STANDARD,Black or African American.
+synthea,patients.RACE,asian,person,race_concept_id,Race,Race,asian,8515,STANDARD,Asian.
+synthea,patients.ETHNICITY,hispanic,person,ethnicity_concept_id,Ethnicity,Ethnicity,hispanic,38003563,STANDARD,Hispanic or Latino.
+synthea,patients.ETHNICITY,nonhispanic,person,ethnicity_concept_id,Ethnicity,Ethnicity,nonhispanic,38003564,STANDARD,Not Hispanic or Latino.
+synthea,patients.BIRTHDATE,,person,birth_datetime,,,,,STANDARD,Direct date cast.
+synthea,patients.DEATHDATE,,death,death_date,,,,,STANDARD,Row created only when DEATHDATE present.
+synthea,conditions.CODE,,condition_occurrence,condition_concept_id,Condition,SNOMED,,,RESOLVE_AT_ETL,Join CONCEPT on SNOMED source_code -> standard concept_id.
+synthea,observations.CODE,,measurement,measurement_concept_id,Measurement,LOINC,,,RESOLVE_AT_ETL,Numeric labs/vitals; VALUE->value_as_number.
+synthea,medications.CODE,,drug_exposure,drug_concept_id,Drug,RxNorm,,,RESOLVE_AT_ETL,Join CONCEPT on RxNorm code.
+synthea,procedures.CODE,,procedure_occurrence,procedure_concept_id,Procedure,SNOMED,,,RESOLVE_AT_ETL,Join CONCEPT on SNOMED code.
+synthea,encounters.Id,,visit_occurrence,visit_occurrence_id,,,,,STANDARD,Encounter class -> visit_concept_id via lookup.
+metabric,data_clinical_patient.SEX,Female,person,gender_concept_id,Gender,Gender,F,8532,STANDARD,Normalize Female->8532.
+metabric,data_clinical_patient.SEX,Male,person,gender_concept_id,Gender,Gender,M,8507,STANDARD,Normalize Male->8507.
+metabric,data_clinical_patient.AGE_AT_DIAGNOSIS,,observation,value_as_number,Observation,LOINC,30525-0,,RESOLVE_AT_ETL,Age at diagnosis; birth_datetime derived.
+metabric,data_clinical_patient.OS_STATUS,DECEASED,death,death_date,,,,,REVIEW,OS_MONTHS approximates death_date; document assumption.
+metabric,data_clinical_patient.VITAL_STATUS,,observation,value_as_concept_id,Observation,SNOMED,,,REVIEW,Living/Deceased status.
+metabric,data_clinical_sample.CANCER_TYPE_DETAILED,,condition_occurrence,condition_concept_id,Condition,SNOMED,254837009,4112853,REVIEW,Malignant neoplasm of breast; verify concept in loaded vocab.
+metabric,data_clinical_sample.ER_STATUS,,measurement,value_as_concept_id,Measurement,LOINC,85337-4,,REVIEW,Estrogen receptor status; Positive/Negative -> value_as_concept_id.
+metabric,data_clinical_sample.PR_STATUS,,measurement,value_as_concept_id,Measurement,LOINC,85339-0,,REVIEW,Progesterone receptor status.
+metabric,data_clinical_sample.HER2_STATUS,,measurement,value_as_concept_id,Measurement,LOINC,48676-1,,REVIEW,HER2 status; reconcile IHC vs FISH source.
+metabric,data_clinical_sample.TUMOR_STAGE,,observation,value_as_number,Observation,SNOMED,,,REVIEW,Stage; map to AJCC staging observation concept.
+metabric,data_clinical_sample.GRADE,,measurement,value_as_number,Measurement,SNOMED,,,REVIEW,Histologic grade.
+metabric,data_clinical_sample.TUMOR_SIZE,,measurement,value_as_number,Measurement,LOINC,21889-1,,REVIEW,Tumor size (mm); set unit_concept_id.
+tcga_brca,data_clinical_patient.SEX,,person,gender_concept_id,Gender,Gender,,,STANDARD,Same normalization as METABRIC SEX.
+tcga_brca,data_clinical_patient.AJCC_PATHOLOGIC_TUMOR_STAGE,,observation,value_as_concept_id,Observation,Cancer Modifier,,,REVIEW,AJCC stage; map stage string to staging concept.
+tcga_brca,data_clinical_sample.ER_STATUS_BY_IHC,,measurement,value_as_concept_id,Measurement,LOINC,85337-4,,REVIEW,ER status by IHC.
+tcga_brca,data_clinical_sample.CANCER_TYPE_DETAILED,,condition_occurrence,condition_concept_id,Condition,SNOMED,254837009,4112853,REVIEW,Breast carcinoma subtype -> SNOMED.
+metabric,data_mutations.ALL,,GENOMIC_RAW,,,,,,PARALLEL_LAYER,Mutations kept raw; linked to person via sample->person crosswalk.
+tcga_brca,data_mutations.ALL,,GENOMIC_RAW,,,,,,PARALLEL_LAYER,Mutations kept raw; linked to person via sample->person crosswalk.

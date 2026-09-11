@@ -1,0 +1,17 @@
+version: 2
+
+seeds:
+  - name: concept_map
+    description: >
+      The reviewed source->OMOP concept mapping. This seed IS the transform contract:
+      OMOP models join against it. The "OMOP Concept Map Review" artifact renders this file.
+    columns:
+      - name: review_status
+        description: STANDARD | RESOLVE_AT_ETL | REVIEW | PARALLEL_LAYER
+        tests:
+          - accepted_values:
+              values: ["STANDARD", "RESOLVE_AT_ETL", "REVIEW", "PARALLEL_LAYER"]
+      - name: source
+        tests:
+          - accepted_values:
+              values: ["synthea", "metabric", "tcga_brca"]

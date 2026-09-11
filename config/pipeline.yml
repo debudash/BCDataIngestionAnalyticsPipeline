@@ -1,0 +1,37 @@
+# Pipeline configuration. Non-secret settings only; secrets live in .env.
+omop_version: "5.4"
+
+paths:
+  staging: "./staging"          # local raw landing zone (Stage 1)
+  vocabulary: "./staging/vocabulary"   # Athena CONCEPT.csv -> loaded to Snowflake VOCAB schema
+  # concept_map is now a dbt seed (seeds/concept_map.csv), not a path here.
+
+sources:
+  - name: synthea
+    kind: synthetic
+    module: breast_cancer
+    # ETL-Synthea expects CSV output; drop generated CSVs here (or run Synthea jar).
+    local_dir: "./staging/synthea"
+  - name: metabric
+    kind: real
+    study_id: brca_metabric
+    url: "https://download.cbioportal.org/brca_metabric.tar.gz"
+    local_dir: "./staging/metabric"
+  - name: tcga_brca
+    kind: real
+    study_id: brca_tcga_pan_can_atlas_2018
+    url: "https://download.cbioportal.org/brca_tcga_pan_can_atlas_2018.tar.gz"
+    local_dir: "./staging/tcga_brca"
+
+# Which cBioPortal files are clinical (-> OMOP) vs genomic (-> parallel layer).
+cbioportal_files:
+  clinical:
+    - data_clinical_patient.txt
+    - data_clinical_sample.txt
+  genomic:
+    - data_mutations.txt
+    - data_cna.txt
+
+deidentification:
+  method: safe_harbor           # HIPAA Safe Harbor, 18 identifiers
+  date_shift_days: 0            # synthetic data: no shift needed; set >0 to demonstrate
