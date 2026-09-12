@@ -140,7 +140,16 @@ unactivated venv fails at stage 2 with *[WinError 2] The system cannot find the 
 | `OMOP.DRUG_EXPOSURE` | 224 |
 | `OMOP.DEATH` | 13 |
 
-`dbt build` ends **PASS=105 WARN=1 ERROR=0** across 106 nodes, with no deprecation warnings.
+`dbt build` ends **PASS=116 WARN=1 ERROR=0** across 117 nodes, with no deprecation warnings.
+
+**How gaps get caught.** Tests assert things about rows that exist; they are blind to a table
+nobody built. `seeds/cdm_v54_tables.csv` is the OMOP CDM v5.4 table list downloaded verbatim
+from OHDSI, and `seeds/cdm_scope.csv` records a decision for every table in it: `BUILT`, or
+`OUT_OF_SCOPE` with a reason. `tests/assert_cdm_coverage.sql` fails if a required table is
+unbuilt, if a spec table is neither ruled in nor out, or if something declared BUILT never
+materialized. Nobody has to know from memory what OMOP requires — the spec is imported, not
+authored. For the generic half (models without tests or docs), run
+`dbt build --select package:dbt_project_evaluator`, which is installed but disabled by default.
 
 **OHDSI readiness.** `OBSERVATION_PERIOD` is the table ATLAS, Achilles and the Data Quality
 Dashboard bound their logic by: an event outside a person's period is invisible to them, and a

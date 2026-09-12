@@ -1,0 +1,40 @@
+cdm_table_name,status,reason
+person,BUILT,Modelled in models/omop/.
+observation_period,BUILT,Modelled in models/omop/.
+visit_occurrence,BUILT,Modelled in models/omop/.
+visit_detail,OUT_OF_SCOPE,No source records sub-visit detail; Synthea encounters are visit-level.
+condition_occurrence,BUILT,Modelled in models/omop/.
+drug_exposure,BUILT,Modelled in models/omop/.
+procedure_occurrence,BUILT,Modelled in models/omop/.
+device_exposure,OUT_OF_SCOPE,No source carries device data.
+measurement,BUILT,Modelled in models/omop/.
+observation,BUILT,Modelled in models/omop/.
+death,BUILT,Modelled in models/omop/.
+note,OUT_OF_SCOPE,No source carries clinical notes.
+note_nlp,OUT_OF_SCOPE,Depends on note; no notes to process.
+specimen,OUT_OF_SCOPE,cBioPortal ships sample-level clinical data but no specimen collection records.
+fact_relationship,OUT_OF_SCOPE,No cross-domain fact links modelled yet.
+location,OUT_OF_SCOPE,"Geography is deliberately absent: Safe Harbor strips it, and no source carries an address."
+care_site,OUT_OF_SCOPE,Synthea emits organizations but care-site analysis is out of scope.
+provider,OUT_OF_SCOPE,Synthea emits providers but provider-level analysis is out of scope.
+payer_plan_period,OUT_OF_SCOPE,Synthea emits payer transitions but insurance analysis is out of scope.
+cost,OUT_OF_SCOPE,Synthea emits claim costs; economic analysis is out of scope for this build.
+drug_era,OUT_OF_SCOPE,Derived era table; 224 dispenses is too thin to make eras meaningful.
+dose_era,OUT_OF_SCOPE,Derived era table; build after drug_exposure has real regimen data.
+condition_era,OUT_OF_SCOPE,"Derived era table; Synthea records one diagnosis per patient, so eras add nothing."
+episode,OUT_OF_SCOPE,"Oncology episode modelling is the obvious next increment, not yet built."
+episode_event,OUT_OF_SCOPE,Depends on episode.
+metadata,OUT_OF_SCOPE,ETL provenance table; dbt's own artifacts serve this role here.
+cdm_source,OUT_OF_SCOPE,Single-database build; would carry one row of provenance.
+concept,OUT_OF_SCOPE,Vocabulary table. Only CONCEPT is loaded (VOCAB schema); the rest are not needed for the joins this pipeline makes.
+vocabulary,OUT_OF_SCOPE,Vocabulary table. Only CONCEPT is loaded (VOCAB schema); the rest are not needed for the joins this pipeline makes.
+domain,OUT_OF_SCOPE,Vocabulary table. Only CONCEPT is loaded (VOCAB schema); the rest are not needed for the joins this pipeline makes.
+concept_class,OUT_OF_SCOPE,Vocabulary table. Only CONCEPT is loaded (VOCAB schema); the rest are not needed for the joins this pipeline makes.
+concept_relationship,OUT_OF_SCOPE,Vocabulary table. Only CONCEPT is loaded (VOCAB schema); the rest are not needed for the joins this pipeline makes.
+relationship,OUT_OF_SCOPE,Vocabulary table. Only CONCEPT is loaded (VOCAB schema); the rest are not needed for the joins this pipeline makes.
+concept_synonym,OUT_OF_SCOPE,Vocabulary table. Only CONCEPT is loaded (VOCAB schema); the rest are not needed for the joins this pipeline makes.
+concept_ancestor,OUT_OF_SCOPE,Vocabulary table. Only CONCEPT is loaded (VOCAB schema); the rest are not needed for the joins this pipeline makes.
+source_to_concept_map,OUT_OF_SCOPE,Vocabulary table. Only CONCEPT is loaded (VOCAB schema); the rest are not needed for the joins this pipeline makes.
+drug_strength,OUT_OF_SCOPE,Vocabulary table. Only CONCEPT is loaded (VOCAB schema); the rest are not needed for the joins this pipeline makes.
+cohort,OUT_OF_SCOPE,"Written by OHDSI tooling (ATLAS), not by this ETL."
+cohort_definition,OUT_OF_SCOPE,"Written by OHDSI tooling (ATLAS), not by this ETL."

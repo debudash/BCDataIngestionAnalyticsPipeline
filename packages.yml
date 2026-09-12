@@ -5,3 +5,10 @@ packages:
     version: [">=1.1.0", "<2.0.0"]
   - package: metaplane/dbt_expectations
     version: [">=0.10.0", "<0.11.0"]
+  # Structural gaps, not data gaps: models with no tests, no documentation, unused
+  # sources, rejoins, and other shapes that a green build cannot see. This is the generic
+  # half of the coverage story; assert_cdm_coverage.sql covers the OMOP-specific half.
+  # Its own models are disabled by default; run it deliberately:
+  #     dbt build --select package:dbt_project_evaluator
+  - package: dbt-labs/dbt_project_evaluator
+    version: [">=0.14.0", "<1.0.0"]

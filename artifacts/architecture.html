@@ -236,8 +236,8 @@
     Common Data Model, and produce a de-identified analytics base. Genomic data runs alongside
     OMOP rather than through it.</p>
     <div class="status">
-      <span>models <b>30</b></span>
-      <span>tests <b class="ok">90 pass</b> · <b class="warn">1 warn</b> · <b>0 error</b></span>
+      <span>models <b>32</b></span>
+      <span>tests <b class="ok">116 pass</b> · <b class="warn">1 warn</b> · <b>0 error</b></span>
       <span>persons <b>8,606</b></span>
       <span>concepts loaded <b>2,068,712</b></span>
     </div>
@@ -334,9 +334,9 @@
           <!-- omop -->
           <rect class="box box-a" x="252" y="412" width="212" height="104" rx="3"/>
           <text class="t" x="266" y="436">OMOP CDM v5.4</text>
-          <text class="s" x="266" y="452">person · condition · measurement · visit</text>
-          <text class="s" x="266" y="468">observation · drug · procedure · death</text>
-          <text class="num" x="266" y="492">8 tables · 238,036 rows</text>
+          <text class="s" x="266" y="452">person · observation_period · condition</text>
+          <text class="s" x="266" y="468">measurement · observation · visit · drug · procedure</text>
+          <text class="num" x="266" y="492">9 tables · OHDSI-ready</text>
 
           <!-- genomic -->
           <rect class="box box-g" x="252" y="560" width="212" height="56" rx="3"/>
@@ -354,9 +354,9 @@
           <!-- tests -->
           <rect class="box box-r" x="780" y="412" width="200" height="104" rx="3"/>
           <text class="t" x="794" y="436">dbt test</text>
-          <text class="s" x="794" y="452">conformance, completeness</text>
-          <text class="s" x="794" y="468">and plausibility checks</text>
-          <text class="num num-r" x="794" y="492">60 checks</text>
+          <text class="s" x="794" y="452">conformance, completeness,</text>
+          <text class="s" x="794" y="468">plausibility, and CDM coverage</text>
+          <text class="num num-r" x="794" y="492">84 checks</text>
 
           <line class="wire" x1="204" y1="444" x2="248" y2="444" marker-end="url(#a1)"/>
           <text class="lbl" x="196" y="436">map</text>

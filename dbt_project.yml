@@ -31,6 +31,16 @@ models:
       +materialized: table
       +schema: analytics
 
+  # dbt_project_evaluator ships its own models. Disabled by default so `dbt build` stays
+  # about this project; run the audit deliberately with:
+  #     dbt build --select package:dbt_project_evaluator
+  dbt_project_evaluator:
+    +enabled: false
+    # If enabled, keep its output OUT of the OMOP schema. Our generate_schema_name macro
+    # sends any model without a +schema to the target default, which is omop, so an
+    # un-pinned package writes its fct_/dim_ tables in among the CDM tables.
+    +schema: dbt_audit
+
 seeds:
   breast_cancer_omop:
     concept_map:

@@ -20,3 +20,34 @@ seeds:
           - accepted_values:
               arguments:
                 values: ["synthea", "metabric", "tcga_brca"]
+
+  - name: cdm_v54_tables
+    description: >
+      The OMOP CDM v5.4 table inventory, downloaded verbatim from OHDSI's CommonDataModel
+      repository (inst/csv/OMOP_CDMv5.4_Table_Level.csv). NOT hand-authored: this is the
+      external specification that `tests/assert_cdm_coverage.sql` measures the build against,
+      so nobody here needs to know from memory what OMOP requires.
+    columns:
+      - name: cdm_table_name
+        tests: [not_null, unique]
+      - name: is_required
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["TRUE", "FALSE"]
+
+  - name: cdm_scope
+    description: >
+      Our decision for every table in the spec: BUILT, or OUT_OF_SCOPE with a reason. The point
+      is that absence has to be signed for. A table nobody has ruled in or out fails the
+      coverage test, which turns silence into a build failure instead of a discovery months later.
+    columns:
+      - name: cdm_table_name
+        tests: [not_null, unique]
+      - name: status
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["BUILT", "OUT_OF_SCOPE"]
+      - name: reason
+        tests: [not_null]

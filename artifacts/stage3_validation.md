@@ -30,12 +30,51 @@
 | Measurement has a value (number or concept) | completeness | warn only | 161 rows, all `NA` |
 | Death after birth | plausibility | 0 violations | pass |
 
-**Run result: `PASS=90 WARN=1 ERROR=0` across 91 nodes.**
+**Run result: `PASS=116 WARN=1 ERROR=0` across 117 nodes.**
+
+## Catching absence, not just error
+
+Tests assert things about rows that exist. They are blind to a table nobody built, a model
+nobody tested, or a file git never tracked. Three defects this project hit were all that shape:
+`OBSERVATION_PERIOD` missing while every build stayed green; a genomic crosswalk covering one of
+two studies; eight staging models untracked since the first commit. None was a wrong value.
+
+Absence needs an inventory from **outside** the thing being checked, and the inventory must not
+depend on anyone remembering the domain.
+
+**1. The spec is imported, not authored.** `seeds/cdm_v54_tables.csv` is downloaded verbatim
+from OHDSI's CommonDataModel repository. It carries an `isRequired` column; exactly two of the
+39 tables are marked required, `person` and `observation_period`. Nobody here needs to know that
+from memory.
+
+**2. Absence must be signed for.** `seeds/cdm_scope.csv` records a decision for every spec
+table: `BUILT`, or `OUT_OF_SCOPE` with a reason. `tests/assert_cdm_coverage.sql` fails three ways:
+
+| Violation | Meaning |
+|---|---|
+| `MISSING_REQUIRED` | the spec requires it; no model builds it |
+| `UNDECLARED` | a spec table nobody ruled in or out — silence, not a decision |
+| `NOT_MATERIALIZED` | declared BUILT but absent from the warehouse |
+
+The gate was verified by simulating the original defect: marking `observation_period` as
+out-of-scope makes the test fail. A gate that has never fired is not known to work.
+
+**3. Structural gaps are a separate, generic problem.** `dbt_project_evaluator` covers the half
+that is not OMOP-specific. It is disabled by default and run deliberately:
+`dbt build --select package:dbt_project_evaluator`. On this project it flags 11 categories, of
+which two matter here: **22 models with no primary-key test** (the class that hid the genomic
+crosswalk bug) and **16 undocumented models**. The rest are dbt naming and directory conventions
+that this project deliberately does not follow, because OMOP table names come from the CDM, not
+from `fct_`/`dim_` prefixes. Adopt the findings that apply; do not chase the score.
 
 ## Novelty & optimization
 - **Streaming validation**: run checks as Snowflake tasks on load, not as a batch gate — fail fast
   per micro-batch.
 - Trend the pass-rate over runs to catch source drift before it reaches analytics.
-- **The gap tests can't see**: the genomic layer had no schema file at all, so a crosswalk that
-  silently covered only one of two studies passed every build. Absence of tests is invisible to a
-  green run; coverage of *models*, not just rows, deserves its own checkpoint.
+- **Field-level conformance is the next increment**: OHDSI publishes
+  `OMOP_CDMv5.4_Field_Level.csv` alongside the table list, so the same import-the-spec pattern
+  can check that each model carries the required *columns*, not just that the table exists.
+- **Run the OHDSI Data Quality Dashboard** against the same schema in production. It encodes
+  thousands of checks written by people who know this domain, which is how you borrow expertise
+  rather than acquire it. It is an R package, so it belongs in the production story rather than
+  the laptop demo.
