@@ -2,6 +2,9 @@ version: 2
 
 # Stage 3 (Data Quality & Integrity) lives here as dbt tests, grouped by the OHDSI DQD
 # categories: conformance, completeness, plausibility. `dbt test` is the validation run.
+#
+# Generic test arguments are nested under `arguments:`, which dbt 1.10+ expects; the
+# top-level form still works but is deprecated.
 models:
   - name: person
     description: OMOP PERSON — one row per unique patient.
@@ -12,13 +15,16 @@ models:
         tests:
           - not_null                                    # conformance
           - accepted_values:
-              values: [8507, 8532, 0]
+              arguments:
+                values: [8507, 8532, 0]
       - name: year_of_birth
         tests:                                          # plausibility
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1900
-              max_value: 2026
-              row_condition: "year_of_birth is not null"   # real sources lack a birth date
+              arguments:
+                min_value: 1900
+                # Tracks the clock instead of a literal, so it cannot go stale.
+                max_value: "{{ modules.datetime.date.today().year }}"
+                row_condition: "year_of_birth is not null"   # real sources lack a birth date
 
   - name: condition_occurrence
     columns:
@@ -28,19 +34,27 @@ models:
         tests:
           - not_null
           - relationships:                              # conformance (FK integrity)
-              to: ref('person')
-              field: person_id
+              arguments:
+                to: ref('person')
+                field: person_id
       - name: condition_concept_id
+        description: >
+          Completeness. Before the concept-map review every row carried one generic concept
+          and unmapped rows were tolerated, so this warned. The review resolved all of them,
+          so a 0 is now a defect and this fails.
         tests:
-          - dbt_utils.expression_is_true:               # completeness (mapped, not 0)
-              expression: "!= 0"
-              config: { severity: warn }
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "!= 0"
 
   - name: measurement
     columns:
       - name: person_id
         tests:
-          - relationships: { to: ref('person'), field: person_id }
+          - relationships:
+              arguments:
+                to: ref('person')
+                field: person_id
       - name: value_as_number
         tests:
           # Completeness: a measurement should carry a result. A receptor status is a
@@ -61,9 +75,34 @@ models:
       - name: person_id
         tests:
           - not_null
-          - relationships: { to: ref('person'), field: person_id }
+          - relationships:
+              arguments:
+                to: ref('person')
+                field: person_id
       - name: drug_concept_id
         description: 0 means the RxNorm code is absent from the loaded vocabulary.
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "!= 0"
+
+  - name: procedure_occurrence
+    description: >
+      Synthea procedures. Single-source for the same reason as drug_exposure, and the only
+      place surgery, biopsy and radiotherapy appear anywhere in the cohort.
+    columns:
+      - name: procedure_occurrence_id
+        tests: [not_null, unique]
+      - name: person_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('person')
+                field: person_id
+      - name: procedure_concept_id
+        description: 0 means the SNOMED code is absent from the loaded vocabulary.
         tests:
           - not_null
 
@@ -72,13 +111,18 @@ models:
       - name: person_id
         tests:
           - not_null
-          - relationships: { to: ref('person'), field: person_id }
+          - relationships:
+              arguments:
+                to: ref('person')
+                field: person_id
 
   - name: visit_occurrence
     columns:
       - name: visit_concept_id
         tests:
-          - accepted_values: { values: [9201, 9202, 9203, 0] }
+          - accepted_values:
+              arguments:
+                values: [9201, 9202, 9203, 0]
 
   - name: observation
     description: Real-source attributes (stage, grade, vital status, age) not modeled as measurements.
@@ -88,4 +132,13 @@ models:
       - name: person_id
         tests:
           - not_null
-          - relationships: { to: ref('person'), field: person_id }
+          - relationships:
+              arguments:
+                to: ref('person')
+                field: person_id
+      - name: observation_concept_id
+        description: Every observation type carries a concept since the review; 0 is a defect.
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "!= 0"

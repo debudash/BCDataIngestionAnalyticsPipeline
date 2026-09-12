@@ -16,8 +16,12 @@ models:
         description: Null would mean a sample whose patient never became an OMOP person.
         tests:
           - not_null
-          - relationships: { to: ref('person'), field: person_id }
+          - relationships:
+              arguments:
+                to: ref('person')
+                field: person_id
       - name: source
         tests:
           - accepted_values:
-              values: ["metabric", "tcga_brca"]
+              arguments:
+                values: ["metabric", "tcga_brca"]

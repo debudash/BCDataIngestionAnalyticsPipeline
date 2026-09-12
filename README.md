@@ -131,15 +131,19 @@ unactivated venv fails at stage 2 with *[WinError 2] The system cannot find the 
 | `OMOP.OBSERVATION` | 10,047 |
 | `OMOP.PERSON` | 8,606 (Synthea 5,013 · METABRIC 2,509 · TCGA 1,084) |
 | `OMOP.CONDITION_OCCURRENCE` | 3,677 |
+| `OMOP.PROCEDURE_OCCURRENCE` | 3,471 |
 | `GENOMIC.SAMPLE_PERSON` | 3,593 |
 | `OMOP.DRUG_EXPOSURE` | 224 |
 | `OMOP.DEATH` | 13 |
 
-`dbt build` ends **PASS=78 WARN=1 ERROR=0** across 79 nodes.
+`dbt build` ends **PASS=90 WARN=1 ERROR=0** across 91 nodes, with no deprecation warnings.
 
 **Three tables have nothing unmapped**: every row in `CONDITION_OCCURRENCE`, `OBSERVATION` and
 `DRUG_EXPOSURE` carries a real `concept_id`, not 0. That is the pay-off from the concept-map
 review (below) plus a vocabulary that covers every RxNorm code Synthea emits.
+`PROCEDURE_OCCURRENCE` is 3,452 of 3,471: the 19 stragglers are one non-standard SNOMED code
+(`241055006`, mammogram - symptomatic) that needs `CONCEPT_RELATIONSHIP` to reach a standard
+concept.
 
 Two results that look wrong and are not:
 
@@ -160,8 +164,10 @@ number nor a coded value: METABRIC receptor and grade results recorded as `NA`.
   A consistent per-patient shift would preserve intervals but is a **Limited Data Set**, a
   different legal basis requiring a data use agreement.
 - Source identifiers are dropped; ages over 89 are aggregated by flooring the birth year.
-- One de-identified model per clinical table, plus `mutations_deid` keyed on `person_id` with
-  the sample barcodes removed, and `unique_patients` as the roster.
+- One de-identified model per clinical table (person, condition, measurement, observation,
+  visit, drug, procedure), plus `mutations_deid` keyed on `person_id` with the sample barcodes
+  removed, and `unique_patients` as the roster. The reconciliation analysis checks all eight
+  for row-count parity against OMOP.
 
 Verify the date rule structurally rather than by sampling — this must return nothing:
 ```sql

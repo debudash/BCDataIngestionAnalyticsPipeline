@@ -12,10 +12,11 @@ models:
         description: Year only. Never finer, and never implying an age above 89.
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              # Bounds track the current year, so the Safe Harbor cap cannot go stale.
-              min_value: "{{ modules.datetime.date.today().year - 90 }}"
-              max_value: "{{ modules.datetime.date.today().year }}"
-              row_condition: "year_of_birth is not null"
+              arguments:
+                # Bounds track the current year, so the Safe Harbor cap cannot go stale.
+                min_value: "{{ modules.datetime.date.today().year - 90 }}"
+                max_value: "{{ modules.datetime.date.today().year }}"
+                row_condition: "year_of_birth is not null"
 
   - name: condition_occurrence_deid
     description: Safe Harbor CONDITION_OCCURRENCE. Year only; free-text source value dropped.
@@ -23,13 +24,17 @@ models:
       - name: person_id
         tests:
           - not_null
-          - relationships: { to: ref('person_deid'), field: person_id }
+          - relationships:
+              arguments:
+                to: ref('person_deid')
+                field: person_id
       - name: condition_start_year
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1900
-              max_value: "{{ modules.datetime.date.today().year }}"
-              row_condition: "condition_start_year is not null"
+              arguments:
+                min_value: 1900
+                max_value: "{{ modules.datetime.date.today().year }}"
+                row_condition: "condition_start_year is not null"
 
   - name: measurement_deid
     description: Safe Harbor MEASUREMENT. Year only; concepts, values and units retained.
@@ -37,7 +42,10 @@ models:
       - name: person_id
         tests:
           - not_null
-          - relationships: { to: ref('person_deid'), field: person_id }
+          - relationships:
+              arguments:
+                to: ref('person_deid')
+                field: person_id
 
   - name: observation_deid
     description: Safe Harbor OBSERVATION. Year only; survival time stays an interval.
@@ -45,7 +53,10 @@ models:
       - name: person_id
         tests:
           - not_null
-          - relationships: { to: ref('person_deid'), field: person_id }
+          - relationships:
+              arguments:
+                to: ref('person_deid')
+                field: person_id
 
   - name: visit_occurrence_deid
     description: Safe Harbor VISIT_OCCURRENCE. Both dates truncated to year.
@@ -53,7 +64,10 @@ models:
       - name: person_id
         tests:
           - not_null
-          - relationships: { to: ref('person_deid'), field: person_id }
+          - relationships:
+              arguments:
+                to: ref('person_deid')
+                field: person_id
 
   - name: mutations_deid
     description: >
@@ -64,11 +78,15 @@ models:
       - name: person_id
         tests:
           - not_null
-          - relationships: { to: ref('person_deid'), field: person_id }
+          - relationships:
+              arguments:
+                to: ref('person_deid')
+                field: person_id
       - name: source
         tests:
           - accepted_values:
-              values: ["metabric", "tcga_brca"]
+              arguments:
+                values: ["metabric", "tcga_brca"]
 
   - name: drug_exposure_deid
     description: Safe Harbor DRUG_EXPOSURE. Years only; free-text drug name dropped.
@@ -76,7 +94,21 @@ models:
       - name: person_id
         tests:
           - not_null
-          - relationships: { to: ref('person_deid'), field: person_id }
+          - relationships:
+              arguments:
+                to: ref('person_deid')
+                field: person_id
+
+  - name: procedure_occurrence_deid
+    description: Safe Harbor PROCEDURE_OCCURRENCE. Year only; free-text description dropped.
+    columns:
+      - name: person_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('person_deid')
+                field: person_id
 
   - name: unique_patients
     description: De-identified roster, one row per person, built only from de-identified models.

@@ -13,8 +13,10 @@ seeds:
           in notes) | PARALLEL_LAYER (kept outside OMOP)
         tests:
           - accepted_values:
-              values: ["STANDARD", "RESOLVE_AT_ETL", "REVIEW", "NOT_MAPPED", "PARALLEL_LAYER"]
+              arguments:
+                values: ["STANDARD", "RESOLVE_AT_ETL", "REVIEW", "NOT_MAPPED", "PARALLEL_LAYER"]
       - name: source
         tests:
           - accepted_values:
-              values: ["synthea", "metabric", "tcga_brca"]
+              arguments:
+                values: ["synthea", "metabric", "tcga_brca"]
