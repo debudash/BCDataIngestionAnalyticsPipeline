@@ -7,6 +7,8 @@
 -- value_as_concept_id. NA and blank stay unmapped rather than guessed, and the raw string
 -- stays in value_source_value so the assay can still be told apart.
 -- Decision 8: tumour size carries its UCUM unit concept (millimetre) from the seed.
+-- Decision 9: histologic grade moved here from OBSERVATION, because its concept sits
+-- in the Measurement domain and OMOP routes a row by its concept's domain.
 with concept as (
     select concept_id, vocabulary_id, concept_code, standard_concept
     from {{ source('omop_vocab', 'concept') }}
@@ -15,6 +17,7 @@ value_map as (
     select source, source_field, source_value, concept_id
     from {{ ref('concept_map') }}
     where omop_field = 'value_as_concept_id'
+      and omop_table = 'measurement'
       and review_status = 'STANDARD'
       and nullif(source_value, '') is not null
 ),
@@ -51,6 +54,11 @@ real_attrs as (
     union all
     select person_source_value, 'data_clinical_sample.TUMOR_SIZE', '21889-1', tumor_size_mm,
            null, 'Tumor size' from {{ ref('stg_metabric__sample') }}
+    union all
+    -- LOINC 44648-4 is histologic grade in a BREAST cancer specimen by Nottingham, which is
+    -- the same scale as the grade 1/2/3 value concepts. Decision 9.
+    select person_source_value, 'data_clinical_sample.GRADE', '44648-4', try_to_double(grade),
+           grade, 'Histologic grade' from {{ ref('stg_metabric__sample') }}
 ),
 real_meas as (
     select p.person_id,
