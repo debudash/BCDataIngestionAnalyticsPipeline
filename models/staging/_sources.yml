@@ -1,0 +1,26 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Raw flat files loaded by Stage 1 (Python). All columns land as VARCHAR.
+    schema: RAW
+    tables:
+      - name: synthea__patients
+      - name: synthea__conditions
+      - name: synthea__observations
+      - name: synthea__encounters
+      - name: synthea__medications
+      - name: synthea__procedures
+      - name: metabric__data_clinical_patient
+      - name: metabric__data_clinical_sample
+      - name: metabric__data_mutations
+      - name: tcga_brca__data_clinical_patient
+      - name: tcga_brca__data_clinical_sample
+      - name: tcga_brca__data_mutations
+
+  - name: omop_vocab
+    description: OMOP standard vocabulary from Athena (athena.ohdsi.org), loaded separately.
+    schema: VOCAB
+    tables:
+      - name: concept
+        description: The OMOP CONCEPT table; code-resolve joins target this on (vocabulary_id, concept_code).

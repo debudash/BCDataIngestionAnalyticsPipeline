@@ -2,8 +2,16 @@
 *.p8
 *.pem
 rsa_key*
-staging/
+# the local landing zone only; a bare 'staging/' would also hide models/staging/
+/staging/
 __pycache__/
 *.pyc
 .venv/
 venv/
+*.jar
+
+# dbt artifacts
+target/
+dbt_packages/
+logs/
+.user.yml
