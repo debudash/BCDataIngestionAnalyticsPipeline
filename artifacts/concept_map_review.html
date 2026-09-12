@@ -1,0 +1,444 @@
+<!-- Decision record for the 12 REVIEW rows in seeds/concept_map.csv. Self-contained page.
+     Published copy: https://claude.ai/code/artifact/c642a1ba-f5a5-4f67-afc3-5d6fd74ec8dc
+     The seed is the executed contract; this page explains why each row says what it says. -->
+<title>OMOP Concept Map Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400..600&display=swap">
+
+<style>
+  :root {
+    --paper:     #F3F6F2;
+    --surface:   #FFFFFF;
+    --ink:       #16201C;
+    --ink-soft:  #4B5A53;
+    --ink-faint: #7B8A83;
+    --rule:      #D6DDD6;
+    --accent:    #0E6B59;
+    --review:    #8A5B0E;
+    --dead:      #A3392F;
+    --tint:      rgba(14, 107, 89, 0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:     #101614;
+      --surface:   #18211E;
+      --ink:       #E7EDE9;
+      --ink-soft:  #A4B2AB;
+      --ink-faint: #76847D;
+      --rule:      #2C3834;
+      --accent:    #56C4A8;
+      --review:    #DCA946;
+      --dead:      #E5786D;
+      --tint:      rgba(86, 196, 168, 0.07);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:     #101614;
+    --surface:   #18211E;
+    --ink:       #E7EDE9;
+    --ink-soft:  #A4B2AB;
+    --ink-faint: #76847D;
+    --rule:      #2C3834;
+    --accent:    #56C4A8;
+    --review:    #DCA946;
+    --dead:      #E5786D;
+    --tint:      rgba(86, 196, 168, 0.07);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 17px;
+    line-height: 1.62;
+    margin: 0;
+  }
+
+  .wrap { max-width: 940px; margin: 0 auto; padding-inline: 22px; padding-block: 54px 80px; }
+
+  h1, h2, .dn {
+    font-family: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+    text-wrap: balance; margin: 0;
+  }
+  h1 { font-size: clamp(2rem, 4.6vw, 2.8rem); font-weight: 800; letter-spacing: -0.025em; line-height: 1.06; }
+  h2 { font-size: 1.22rem; font-weight: 700; letter-spacing: -0.012em; }
+
+  p { margin: 0; max-width: 66ch; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.7rem; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.14em; color: var(--ink-faint);
+  }
+  .lede { font-size: 1.1rem; color: var(--ink-soft); max-width: 62ch; }
+  header.head { display: flex; flex-direction: column; gap: 13px; }
+
+  .tally {
+    display: flex; flex-wrap: wrap; gap: 10px 30px;
+    margin-top: 24px; padding-top: 15px; border-top: 1px solid var(--rule);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.76rem; font-variant-numeric: tabular-nums; color: var(--ink-faint);
+  }
+  .tally b { color: var(--ink); font-weight: 600; }
+  .tally .yes { color: var(--accent); }
+  .tally .no  { color: var(--dead); }
+  .tally .ask { color: var(--review); }
+
+  .intro { margin-top: 44px; display: flex; flex-direction: column; gap: 14px; }
+
+  /* --- decision blocks --- */
+  .decision {
+    margin-top: 34px;
+    border-top: 1px solid var(--rule);
+    padding-top: 22px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .dhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; }
+  .dn {
+    font-size: 0.95rem; font-weight: 700; color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .dmeta {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-faint); margin-left: auto;
+  }
+  .verdict {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.66rem; font-weight: 600; letter-spacing: 0.11em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 2px; white-space: nowrap;
+  }
+  .v-yes { color: var(--accent); background: var(--tint); border: 1px solid var(--accent); }
+  .v-no  { color: var(--dead);   border: 1px solid var(--dead); }
+  .v-ask { color: var(--review); border: 1px solid var(--review); }
+
+  .rows { display: grid; grid-template-columns: max-content 1fr; gap: 3px 18px; align-items: baseline; }
+  .rows dt {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-faint); padding-top: 5px;
+  }
+  .rows dd { margin: 0; font-size: 0.96rem; }
+  .rows dd + dt { margin-top: 11px; }
+
+  .vals, .cands { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.8rem; }
+  .vals { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .cands { display: flex; flex-direction: column; gap: 3px; }
+  .cands span { display: block; }
+  .cands b { color: var(--accent); font-weight: 600; }
+  .cands i { font-style: normal; color: var(--ink-faint); }
+  .pick b { color: var(--accent); }
+
+  .why { color: var(--ink-soft); font-size: 0.96rem; }
+
+  .field {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.78rem; color: var(--ink-soft);
+  }
+
+  code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.85em; color: var(--accent);
+  }
+
+  .howto {
+    margin-top: 46px; padding: 22px 24px;
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 3px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .howto ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 7px; }
+  .howto li { font-size: 0.96rem; }
+
+  footer {
+    margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--rule);
+    font-size: 0.85rem; color: var(--ink-faint); max-width: 70ch;
+  }
+
+  @media (max-width: 620px) {
+    .rows { grid-template-columns: 1fr; gap: 2px; }
+    .rows dd + dt { margin-top: 13px; }
+    .dmeta { margin-left: 0; width: 100%; }
+    body { font-size: 16px; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="head">
+    <div class="eyebrow">Decision record · all 12 rows closed</div>
+    <h1>OMOP Concept Map Review</h1>
+    <p class="lede">Twelve mappings were marked REVIEW and left unbuilt. Each was a clinical
+    judgment, not a coding task. All twelve are now decided and built. This is the record of
+    what was chosen and why.</p>
+    <div class="tally">
+      <span>decisions <b>8</b> covering <b>12</b> map rows</span>
+      <span><b class="yes">7</b> approved</span>
+      <span><b class="no">1</b> declined</span>
+      <span>seed now <b>77</b> rows, <b class="yes">0</b> still REVIEW</span>
+    </div>
+  </header>
+
+  <div class="intro">
+    <p>Every concept ID below was looked up in <code>VOCAB.CONCEPT</code> as loaded in your
+    warehouse. All of these are now live in the pipeline: the seed grew from 33 rows to 77, and
+    the OMOP models join it instead of carrying fixed concepts.</p>
+    <p>Decision 3 was the one that mattered most, and it delivered. Every condition record used to
+    carry the same concept, <span class="field">4112853 Malignant neoplasm of breast</span>, which
+    said only that these patients have breast cancer. They now carry eight concepts across
+    3,677 records: 2,645 ductal, 393 lobular, 269 mixed, 42 mucinous, and the rest.</p>
+  </div>
+
+  <!-- 1 -->
+  <section class="decision">
+    <div class="dhead">
+      <span class="dn">01</span>
+      <h2>Death date from survival status</h2>
+      <span class="verdict v-no">Reject</span>
+      <span class="dmeta">1 row · metabric OS_STATUS → death.death_date</span>
+    </div>
+    <dl class="rows">
+      <dt>Source</dt>
+      <dd class="vals">1:DECEASED 1,144 · 0:LIVING 837 · blank 528</dd>
+      <dt>Blocker</dt>
+      <dd class="why">METABRIC contains no calendar date of any kind. The only temporal fields are
+      <span class="field">AGE_AT_DIAGNOSIS</span>, <span class="field">OS_MONTHS</span> and
+      <span class="field">RFS_MONTHS</span>, all intervals. There is no anchor date to add months
+      to, so a death date cannot be constructed at all, only invented.</dd>
+      <dt>Recommend</dt>
+      <dd class="why">Leave <code>DEATH</code> empty and record survival months as an observation
+      instead, where an interval is an honest representation. Change the row's status to note the
+      decision rather than leaving it open.</dd>
+      <dt>Effect</dt>
+      <dd class="why">No change to row counts. The empty death table stops looking like a defect
+      and becomes a recorded choice.</dd>
+    </dl>
+  </section>
+
+  <!-- 2 -->
+  <section class="decision">
+    <div class="dhead">
+      <span class="dn">02</span>
+      <h2>Vital status as an observation value</h2>
+      <span class="verdict v-yes">Approve</span>
+      <span class="dmeta">1 row · metabric VITAL_STATUS → observation.value_as_concept_id</span>
+    </div>
+    <dl class="rows">
+      <dt>Source</dt>
+      <dd class="vals">Living 837 · Died of Disease 646 · Died of Other Causes 497 · blank 529</dd>
+      <dt>Candidates</dt>
+      <dd class="cands">
+        <span><b>4230556</b> Alive <i>· SNOMED · Observation</i></span>
+        <span><b>434489</b> Dead <i>· SNOMED · Observation</i></span>
+      </dd>
+      <dt>Recommend</dt>
+      <dd class="why">Map Living to 4230556 and both died categories to 434489, keeping the
+      original string in <code>value_source_value</code>. OMOP has no standard value that carries
+      cause of death in this slot, so collapsing to alive and dead is correct here. The
+      disease versus other causes distinction survives in the source value, and belongs in a
+      cause-of-death field later if you need it analytically.</dd>
+      <dt>Effect</dt>
+      <dd class="why">1,980 observations move off concept 0.</dd>
+    </dl>
+  </section>
+
+  <!-- 3 -->
+  <section class="decision">
+    <div class="dhead">
+      <span class="dn">03</span>
+      <h2>Histology instead of one generic diagnosis</h2>
+      <span class="verdict v-yes">Approve</span>
+      <span class="dmeta">2 rows · metabric + tcga CANCER_TYPE_DETAILED</span>
+    </div>
+    <dl class="rows">
+      <dt>Source</dt>
+      <dd class="vals">Invasive Ductal 2,645 · Invasive Lobular 393 · Mixed Ductal and Lobular 269
+      · Invasive NOS 232 · Mixed Mucinous 42 · other 12</dd>
+      <dt>Candidates</dt>
+      <dd class="cands">
+        <span><b>4237178</b> Infiltrating duct carcinoma of breast <i>· SNOMED</i></span>
+        <span><b>4080865</b> Infiltrating lobular carcinoma of breast <i>· SNOMED</i></span>
+        <span><b>40480215</b> Mixed ductal and lobular carcinoma of breast <i>· SNOMED</i></span>
+        <span><b>37017351</b> Invasive carcinoma of breast <i>· SNOMED, for NOS</i></span>
+      </dd>
+      <dt>Recommend</dt>
+      <dd class="why">Map the three named histologies to their specific SNOMED disorders and send
+      everything unnamed to 37017351. Both studies use the same wording, so one set of mappings
+      covers them, which is exactly the kind of harmonization OMOP exists to enable.</dd>
+      <dt>Effect</dt>
+      <dd class="why">3,593 condition records gain real histologic specificity instead of all
+      carrying the same generic breast cancer concept. This is the decision that makes the OMOP
+      layer worth querying.</dd>
+    </dl>
+  </section>
+
+  <!-- 4 -->
+  <section class="decision">
+    <div class="dhead">
+      <span class="dn">04</span>
+      <h2>Receptor status as a standard value</h2>
+      <span class="verdict v-yes">Approve</span>
+      <span class="dmeta">4 rows · ER, PR, HER2, and one dead row</span>
+    </div>
+    <dl class="rows">
+      <dt>Source</dt>
+      <dd class="vals">ER Pos 1,825 / Neg 644 · PR Pos 1,040 / Neg 940 · HER2 Pos 247 / Neg 1,733</dd>
+      <dt>Candidates</dt>
+      <dd class="cands">
+        <span><b>9191</b> Positive <i>· SNOMED · Meas Value</i></span>
+        <span><b>9189</b> Negative <i>· SNOMED · Meas Value</i></span>
+        <span>45884084 / 45878583 <i>· the LOINC answer-list equivalents</i></span>
+      </dd>
+      <dt>Recommend</dt>
+      <dd class="why">Use the SNOMED qualifier values, 9191 and 9189, which are the OMOP
+      convention for the measurement value slot. Leave <span class="field">NA</span> and blank
+      unmapped rather than guessing. Separately, delete the TCGA
+      <span class="field">ER_STATUS_BY_IHC</span> row: that column exists in neither TCGA clinical
+      file, which is what broke the first run.</dd>
+      <dt>Watch</dt>
+      <dd class="why">METABRIC's HER2 column is derived differently from a standard IHC or FISH
+      result. Mapping it to the same concept as an IHC-derived value asserts the two are
+      interchangeable. If that matters to your analysis, keep the assay method in
+      <code>measurement_source_value</code> so it can be filtered.</dd>
+      <dt>Effect</dt>
+      <dd class="why">6,429 measurements gain a value concept. The warning does not clear by itself: that test checks <code>value_as_number</code>, which stays null for a text result. It needs narrowing to rows carrying neither a number nor a value concept. The remaining 40 rows recorded as NA stay unmapped.</dd>
+    </dl>
+  </section>
+
+  <!-- 5 -->
+  <section class="decision">
+    <div class="dhead">
+      <span class="dn">05</span>
+      <h2>METABRIC tumour stage stays a number</h2>
+      <span class="verdict v-yes">Reopened, then approved</span>
+      <span class="dmeta">1 row · metabric TUMOR_STAGE → observation.value_as_concept_id</span>
+    </div>
+    <dl class="rows">
+      <dt>Source</dt>
+      <dd class="vals">2 → 979 · NA → 721 · 1 → 630 · 3 → 144 · 0 → 24 · 4 → 11</dd>
+      <dt>Problem</dt>
+      <dd class="why">These are bare integers with no substage and no stated AJCC edition. Your
+      vocabulary carries edition-specific concepts, 6th, 7th and 8th, and they are not
+      interchangeable. Choosing one would assert an edition the source never recorded.</dd>
+      <dt>Outcome</dt>
+      <dd class="why">The objection turned out to be avoidable. Generic <span class="field">Stage
+      0-4</span> concepts name the stage without claiming a system, an edition, or a
+      clinical-versus-pathological reading, none of which METABRIC states. Recommending rejection
+      had confused "we cannot assert AJCC" with "we cannot code this at all".</dd>
+      <dt>Effect</dt>
+      <dd class="why">1,788 observations gained a value concept; the 721 NA rows stay
+      unmapped.</dd>
+    </dl>
+  </section>
+
+  <!-- 6 -->
+  <section class="decision">
+    <div class="dhead">
+      <span class="dn">06</span>
+      <h2>TCGA stage: which AJCC edition?</h2>
+      <span class="verdict v-ask">Your call</span>
+      <span class="dmeta">1 row · tcga AJCC_PATHOLOGIC_TUMOR_STAGE</span>
+    </div>
+    <dl class="rows">
+      <dt>Source</dt>
+      <dd class="vals">IIA 355 · IIB 255 · IIIA 155 · I 89 · IA 86 · IIIC 64 · IIIB 28 · IV 19 ·
+      X 14 · II 6 · IB 6 · III 2</dd>
+      <dt>Candidates</dt>
+      <dd class="cands">
+        <span><b>1635381</b> AJCC/UICC <b>7th</b> pathological Stage 2A</span>
+        <span><b>1634890</b> AJCC/UICC <b>8th</b> pathological Stage 2A</span>
+        <span><b>1634960</b> AJCC/UICC pathological Stage 2A <i>· edition-neutral</i></span>
+      </dd>
+      <dt>Why you decide</dt>
+      <dd class="why">Unlike METABRIC, TCGA names real substages, so these do map cleanly. The
+      only question is edition. TCGA-BRCA cases were staged during the years the 7th edition was
+      current, which argues for the 7th. The 8th edition changed breast staging substantially by
+      adding biomarkers, so labelling this cohort as 8th would be wrong. The edition-neutral
+      concepts are the cautious option if you would rather not assert one.</dd>
+      <dt>Also</dt>
+      <dd class="why">The 14 patients recorded as STAGE X are explicitly unstageable and should
+      stay unmapped.</dd>
+      <dt>Effect</dt>
+      <dd class="why">1,065 of 1,079 observations gain a stage concept.</dd>
+    </dl>
+  </section>
+
+  <!-- 7 -->
+  <section class="decision">
+    <div class="dhead">
+      <span class="dn">07</span>
+      <h2>Histologic grade has an exact breast-specific concept</h2>
+      <span class="verdict v-yes">Approve</span>
+      <span class="dmeta">1 row · metabric GRADE → measurement.value_as_number</span>
+    </div>
+    <dl class="rows">
+      <dt>Source</dt>
+      <dd class="vals">3 → 1,198 · 2 → 976 · 1 → 214 · NA → 121</dd>
+      <dt>Candidates</dt>
+      <dd class="cands">
+        <span><b>1242373</b> Nottingham combined histologic grade 1 <i>· SNOMED</i></span>
+        <span><b>1242374</b> Nottingham combined histologic grade 2 <i>· SNOMED</i></span>
+        <span><b>1242375</b> Nottingham combined histologic grade 3 <i>· SNOMED</i></span>
+      </dd>
+      <dt>Recommend</dt>
+      <dd class="why">Approve, and move the value from <code>value_as_number</code> to
+      <code>value_as_concept_id</code>. Breast grade is reported on the Nottingham scale, so these
+      three concepts are not an approximation of the source, they are the source's own scale named
+      properly. The 1, 2, 3 distribution matches what Nottingham grading produces.</dd>
+      <dt>Effect</dt>
+      <dd class="why">2,388 measurements gain an exact value concept.</dd>
+    </dl>
+  </section>
+
+  <!-- 8 -->
+  <section class="decision">
+    <div class="dhead">
+      <span class="dn">08</span>
+      <h2>Tumour size needs only its unit</h2>
+      <span class="verdict v-yes">Approve</span>
+      <span class="dmeta">1 row · metabric TUMOR_SIZE → measurement</span>
+    </div>
+    <dl class="rows">
+      <dt>Source</dt>
+      <dd class="vals">2,360 values · min 1 · mean 26.2 · max 182</dd>
+      <dt>Candidate</dt>
+      <dd class="cands"><span><b>8588</b> millimeter <i>· UCUM · Unit</i></span></dd>
+      <dt>Recommend</dt>
+      <dd class="why">Approve. The measurement already has its LOINC code, 21889-1, and the value
+      stays numeric. All that is missing is <code>unit_concept_id</code>. The distribution
+      confirms millimetres: a mean of 26 and a maximum of 182 are plausible tumour sizes in mm and
+      absurd in cm.</dd>
+      <dt>Effect</dt>
+      <dd class="why">Tumour sizes become comparable across sources instead of unitless numbers.</dd>
+    </dl>
+  </section>
+
+  <div class="howto">
+    <h2>What happened after the decisions</h2>
+    <ol>
+      <li>Each approved decision becomes rows in <span class="field">seeds/concept_map.csv</span>
+      with <span class="field">review_status</span> changed from REVIEW to STANDARD and the
+      concept ID filled in.</li>
+      <li>Rejected decisions get their status closed with the reason recorded, so they read as
+      settled rather than forgotten.</li>
+      <li>The models that read value maps need small edits, since grade and receptor status move
+      from a numeric slot to a concept slot.</li>
+      <li>A rerun shows the effect, and the reconciliation analysis reports how far the unmapped
+      counts fell.</li>
+    </ol>
+    <p class="why">Two follow-ups came out of the decisions themselves. Coding a value does not
+    code the observation, so the four observation types needed concepts of their own before
+    reconciliation stopped reporting 8,077 unmapped rows. And decision 1 left survival data
+    stranded in RAW until it was carried into OBSERVATION as survival time in months.</p>
+  </div>
+
+  <footer>
+    Every concept ID verified against VOCAB.CONCEPT as loaded, 2,068,712 concepts across SNOMED,
+    LOINC, RxNorm, Cancer Modifier, ICDO3, NAACCR and UCUM. Source distributions queried from the
+    RAW schema, not from documentation. All decisions are built and passing: the seed holds 77
+    rows with none still marked REVIEW.
+  </footer>
+
+</div>

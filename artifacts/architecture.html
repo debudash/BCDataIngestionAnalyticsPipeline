@@ -1,0 +1,550 @@
+<!-- Solution architecture. Self-contained page: open it in a browser, no build step.
+     Published copy: https://claude.ai/code/artifact/77aceeff-1ab2-4c68-b059-342126704c84
+     Regenerate the figures by hand if the pipeline changes; the numbers are measured,
+     not computed at render time. -->
+<title>Breast Cancer OMOP Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400..600&display=swap">
+
+<style>
+  :root {
+    --paper:      #F3F6F2;
+    --surface:    #FFFFFF;
+    --ink:        #16201C;
+    --ink-soft:   #4B5A53;
+    --ink-faint:  #7B8A83;
+    --rule:       #D6DDD6;
+    --accent:     #0E6B59;
+    --genomic:    #7A3B6B;
+    --review:     #8A5B0E;
+    --dead:       #A3392F;
+    --band:       rgba(14, 107, 89, 0.045);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:     #101614;
+      --surface:   #18211E;
+      --ink:       #E7EDE9;
+      --ink-soft:  #A4B2AB;
+      --ink-faint: #76847D;
+      --rule:      #2C3834;
+      --accent:    #56C4A8;
+      --genomic:   #CB93BD;
+      --review:    #DCA946;
+      --dead:      #E5786D;
+      --band:      rgba(86, 196, 168, 0.06);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:     #101614;
+    --surface:   #18211E;
+    --ink:       #E7EDE9;
+    --ink-soft:  #A4B2AB;
+    --ink-faint: #76847D;
+    --rule:      #2C3834;
+    --accent:    #56C4A8;
+    --genomic:   #CB93BD;
+    --review:    #DCA946;
+    --dead:      #E5786D;
+    --band:      rgba(86, 196, 168, 0.06);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+    font-size: 17px;
+    line-height: 1.62;
+    margin: 0;
+  }
+
+  .wrap {
+    max-width: 1060px;
+    margin: 0 auto;
+    padding-inline: 22px;
+    padding-block: 56px 80px;
+  }
+
+  h1, h2, h3 {
+    font-family: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+    text-wrap: balance;
+    margin: 0;
+  }
+  h1 {
+    font-size: clamp(2.1rem, 5vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.04;
+  }
+  h2 {
+    font-size: clamp(1.3rem, 2.4vw, 1.6rem);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+  h3 {
+    font-size: 1.02rem;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+
+  p { margin: 0; max-width: 66ch; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink-faint);
+  }
+
+  .lede { font-size: 1.12rem; color: var(--ink-soft); max-width: 62ch; }
+
+  header.head { display: flex; flex-direction: column; gap: 14px; }
+
+  /* Status line: a rule and figures, not a row of tiles. */
+  .status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 34px;
+    margin-top: 26px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .status span { color: var(--ink-faint); }
+  .status b { color: var(--ink); font-weight: 600; }
+  .status .ok { color: var(--accent); }
+  .status .warn { color: var(--review); }
+
+  section { margin-top: 58px; display: flex; flex-direction: column; gap: 16px; }
+
+  figure { margin: 0; display: flex; flex-direction: column; gap: 12px; }
+  .scroll { overflow-x: auto; }
+  figure svg { display: block; max-width: 100%; height: auto; min-width: 660px; }
+  figcaption {
+    font-size: 0.92rem;
+    color: var(--ink-soft);
+    max-width: 72ch;
+    border-left: 2px solid var(--accent);
+    padding-left: 13px;
+  }
+
+  /* ---- diagram primitives, themed from the page tokens ---- */
+  .d text {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    fill: var(--ink);
+  }
+  .d .band  { fill: var(--band); }
+  .d .box   { fill: var(--surface); stroke: var(--rule); stroke-width: 1.5; }
+  .d .box-a { stroke: var(--accent); }
+  .d .box-g { stroke: var(--genomic); }
+  .d .box-r { stroke: var(--review); stroke-dasharray: 5 3; }
+  .d .box-x { stroke: var(--dead); stroke-dasharray: 5 3; }
+  .d .wire  { stroke: var(--ink-soft); stroke-width: 1.5; fill: none; }
+  .d .wire-a { stroke: var(--accent); }
+  .d .wire-g { stroke: var(--genomic); }
+  .d .wire-d { stroke: var(--ink-faint); stroke-dasharray: 4 4; }
+  .d .wire-x { stroke: var(--dead); }
+  .d .t   { font-size: 12.5px; font-weight: 600; }
+  .d .s   { font-size: 11px; fill: var(--ink-soft); font-weight: 400; }
+  .d .lbl { font-size: 10.5px; fill: var(--ink-faint); }
+  .d .cap {
+    font-size: 10.5px; font-weight: 600; letter-spacing: 0.13em;
+    fill: var(--ink-faint);
+  }
+  .d .num { font-size: 11px; fill: var(--accent); font-weight: 600; }
+  .d .num-g { fill: var(--genomic); }
+  .d .num-r { fill: var(--review); }
+  .d .num-x { fill: var(--dead); }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .scroll table { min-width: 540px; }
+  th, td {
+    text-align: left;
+    padding: 9px 16px 9px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  th {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.11em;
+    color: var(--ink-faint);
+    font-weight: 500;
+  }
+  td.n { text-align: right; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  td.obj { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.82rem; }
+
+  .pending { display: flex; flex-direction: column; gap: 0; margin: 0; padding: 0; list-style: none; }
+  .pending li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 20px;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--rule);
+    align-items: baseline;
+  }
+  .pending b { font-weight: 600; }
+  .pending span { color: var(--ink-soft); font-size: 0.93rem; grid-column: 1 / -1; max-width: 68ch; }
+  .pending em {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-style: normal;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--review);
+    white-space: nowrap;
+  }
+
+  code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.86em;
+    color: var(--accent);
+  }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 18px;
+    border-top: 1px solid var(--rule);
+    font-size: 0.86rem;
+    color: var(--ink-faint);
+    max-width: 70ch;
+  }
+
+  @media (max-width: 560px) {
+    .wrap { padding-block: 38px 60px; }
+    body { font-size: 16px; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="head">
+    <div class="eyebrow">Architecture · concept map reviewed and closed</div>
+    <h1>Breast Cancer OMOP Pipeline</h1>
+    <p class="lede">Three breast cancer sources land in Snowflake, get harmonized into the OMOP
+    Common Data Model, and produce a de-identified analytics base. Genomic data runs alongside
+    OMOP rather than through it.</p>
+    <div class="status">
+      <span>models <b>30</b></span>
+      <span>tests <b class="ok">90 pass</b> · <b class="warn">1 warn</b> · <b>0 error</b></span>
+      <span>persons <b>8,606</b></span>
+      <span>concepts loaded <b>2,068,712</b></span>
+    </div>
+  </header>
+
+  <section>
+    <h2>The shape of the pipeline</h2>
+    <p>Two tools, split at a clean boundary. Python moves bytes and never transforms them.
+    Everything that changes the meaning of a row happens in dbt, in SQL, in the warehouse.</p>
+
+    <figure>
+      <div class="scroll">
+        <svg class="d" viewBox="0 0 1020 660" role="img"
+             aria-label="Stage 1 in Python downloads four sources to local staging and loads them into Snowflake RAW and VOCAB. Stages 2 to 4 in dbt turn RAW into staging views, then OMOP and genomic tables, then a de-identified analytics layer, with 27 tests.">
+          <defs>
+            <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5"
+                    markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/>
+            </marker>
+          </defs>
+
+          <rect class="band" x="8"  y="48"  width="1004" height="232" rx="4"/>
+          <rect class="band" x="8"  y="340" width="1004" height="300" rx="4"/>
+
+          <text class="cap" x="24" y="36">STAGE 1 · PYTHON · EXTRACT AND LOAD</text>
+          <text class="cap" x="24" y="328">STAGES 2–4 · DBT · TRANSFORM, TEST, DE-IDENTIFY</text>
+
+          <!-- sources -->
+          <rect class="box" x="24" y="64"  width="236" height="44" rx="3"/>
+          <text class="t" x="38" y="84">Synthea</text>
+          <text class="s" x="38" y="99">breast_cancer module · 5,013 patients</text>
+
+          <rect class="box" x="24" y="116" width="236" height="44" rx="3"/>
+          <text class="t" x="38" y="136">METABRIC</text>
+          <text class="s" x="38" y="151">cBioPortal datahub · 4 files</text>
+
+          <rect class="box" x="24" y="168" width="236" height="44" rx="3"/>
+          <text class="t" x="38" y="188">TCGA-BRCA</text>
+          <text class="s" x="38" y="203">datahub + REST API · 4 files</text>
+
+          <rect class="box" x="24" y="220" width="236" height="44" rx="3"/>
+          <text class="t" x="38" y="240">Athena vocabulary</text>
+          <text class="s" x="38" y="255">2 bundles merged to one CONCEPT.csv</text>
+
+          <line class="wire" x1="260" y1="86"  x2="310" y2="86"  marker-end="url(#a1)"/>
+          <line class="wire" x1="260" y1="138" x2="310" y2="138" marker-end="url(#a1)"/>
+          <line class="wire" x1="260" y1="190" x2="310" y2="190" marker-end="url(#a1)"/>
+          <line class="wire" x1="260" y1="242" x2="310" y2="242" marker-end="url(#a1)"/>
+
+          <!-- local landing -->
+          <rect class="box" x="316" y="64" width="170" height="200" rx="3"/>
+          <text class="t" x="330" y="90">staging/</text>
+          <text class="s" x="330" y="107">local landing zone</text>
+          <text class="s" x="330" y="130">git-ignored</text>
+          <text class="s" x="330" y="148">flat files only</text>
+          <text class="s" x="330" y="166">no transforms</text>
+          <text class="num" x="330" y="196">21 data files</text>
+          <text class="num" x="330" y="214">263 MB vocabulary</text>
+
+          <line class="wire" x1="486" y1="126" x2="556" y2="126" marker-end="url(#a1)"/>
+          <text class="lbl" x="500" y="118">load</text>
+          <line class="wire" x1="486" y1="234" x2="556" y2="234" marker-end="url(#a1)"/>
+          <text class="lbl" x="500" y="226">load</text>
+
+          <!-- snowflake raw -->
+          <rect class="box" x="558" y="64" width="230" height="124" rx="3"/>
+          <text class="t" x="572" y="88">RAW</text>
+          <text class="s" x="572" y="105">one table per downloaded file</text>
+          <text class="s" x="572" y="123">every column VARCHAR, as-is</text>
+          <text class="num" x="572" y="150">21 tables</text>
+          <text class="s" x="572" y="172">synthea 13 · metabric 4 · tcga 4</text>
+
+          <rect class="box" x="558" y="204" width="230" height="60" rx="3"/>
+          <text class="t" x="572" y="226">VOCAB.CONCEPT</text>
+          <text class="num" x="572" y="248">2,068,712 concepts</text>
+
+          <!-- wrap connector into the dbt band -->
+          <polyline class="wire wire-a" points="788,126 966,126 966,306 114,306 114,404"
+                    marker-end="url(#a1)"/>
+          <text class="lbl" x="700" y="298">dbt reads RAW through source()</text>
+
+          <!-- concept map seed -->
+          <rect class="box box-a" x="252" y="352" width="212" height="44" rx="3"/>
+          <text class="t" x="266" y="372">concept_map seed</text>
+          <text class="s" x="266" y="387">33 reviewed rows · the contract</text>
+          <line class="wire wire-a" x1="358" y1="396" x2="358" y2="404" marker-end="url(#a1)"/>
+
+          <!-- staging views -->
+          <rect class="box" x="24" y="412" width="180" height="64" rx="3"/>
+          <text class="t" x="38" y="436">STAGING</text>
+          <text class="s" x="38" y="452">views that clean RAW</text>
+          <text class="num" x="38" y="468">10 views</text>
+
+          <!-- omop -->
+          <rect class="box box-a" x="252" y="412" width="212" height="104" rx="3"/>
+          <text class="t" x="266" y="436">OMOP CDM v5.4</text>
+          <text class="s" x="266" y="452">person · condition · measurement · visit</text>
+          <text class="s" x="266" y="468">observation · drug · procedure · death</text>
+          <text class="num" x="266" y="492">8 tables · 238,036 rows</text>
+
+          <!-- genomic -->
+          <rect class="box box-g" x="252" y="560" width="212" height="56" rx="3"/>
+          <text class="t" x="266" y="582">GENOMIC</text>
+          <text class="s" x="266" y="597">mutations kept raw, not modeled</text>
+          <text class="num num-g" x="266" y="612">3 tables · 105,091 rows</text>
+
+          <!-- analytics -->
+          <rect class="box box-a" x="516" y="412" width="212" height="104" rx="3"/>
+          <text class="t" x="530" y="436">ANALYTICS</text>
+          <text class="s" x="530" y="452">HIPAA Safe Harbor applied</text>
+          <text class="s" x="530" y="468">one model per fact table + roster</text>
+          <text class="num" x="530" y="492">9 tables · 348,127 rows</text>
+
+          <!-- tests -->
+          <rect class="box box-r" x="780" y="412" width="200" height="104" rx="3"/>
+          <text class="t" x="794" y="436">dbt test</text>
+          <text class="s" x="794" y="452">conformance, completeness</text>
+          <text class="s" x="794" y="468">and plausibility checks</text>
+          <text class="num num-r" x="794" y="492">60 checks</text>
+
+          <line class="wire" x1="204" y1="444" x2="248" y2="444" marker-end="url(#a1)"/>
+          <text class="lbl" x="196" y="436">map</text>
+
+          <polyline class="wire wire-g" points="114,476 114,588 248,588" marker-end="url(#a1)"/>
+          <text class="lbl" x="128" y="580">pass through</text>
+
+          <line class="wire wire-a" x1="464" y1="464" x2="512" y2="464" marker-end="url(#a1)"/>
+          <text class="lbl" x="452" y="456">de-id</text>
+
+          <line class="wire wire-d" x1="728" y1="464" x2="776" y2="464" marker-end="url(#a1)"/>
+          <polyline class="wire wire-d" points="358,516 358,540 880,540 880,520" marker-end="url(#a1)"/>
+        </svg>
+      </div>
+      <figcaption>The Python half never interprets a value; it lands files and copies them into
+      <code>RAW</code> as text. Everything downstream of that boundary is dbt SQL, which is why
+      the concept map, the tests and the de-identification all live in one place.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What each layer holds</h2>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Schema</th><th>Object</th><th>Rows</th><th>Note</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>VOCAB</td><td class="obj">CONCEPT</td><td class="n">2,068,712</td><td>7 vocabularies, merged from 2 Athena bundles</td></tr>
+          <tr><td>OMOP</td><td class="obj">MEASUREMENT</td><td class="n">163,055</td><td>labs, vitals, receptor status, grade</td></tr>
+          <tr><td>ANALYTICS</td><td class="obj">MUTATIONS_DEID</td><td class="n">101,498</td><td>variant calls keyed on person_id, barcodes dropped</td></tr>
+          <tr><td>OMOP</td><td class="obj">VISIT_OCCURRENCE</td><td class="n">48,943</td><td>Synthea encounters</td></tr>
+          <tr><td>OMOP</td><td class="obj">OBSERVATION</td><td class="n">10,047</td><td>stage, vital status, survival time, age</td></tr>
+          <tr><td>OMOP</td><td class="obj">PERSON</td><td class="n">8,606</td><td>Synthea 5,013 · METABRIC 2,509 · TCGA 1,084</td></tr>
+          <tr><td>OMOP</td><td class="obj">CONDITION_OCCURRENCE</td><td class="n">3,677</td><td>8 histologies, none unmapped</td></tr>
+          <tr><td>GENOMIC</td><td class="obj">SAMPLE_PERSON</td><td class="n">3,593</td><td>sample to person, both studies</td></tr>
+          <tr><td>OMOP</td><td class="obj">PROCEDURE_OCCURRENCE</td><td class="n">3,471</td><td>mammography, radiotherapy, biopsy</td></tr>
+          <tr><td>OMOP</td><td class="obj">DRUG_EXPOSURE</td><td class="n">224</td><td>RxNorm, 100% resolved</td></tr>
+          <tr><td>OMOP</td><td class="obj">DEATH</td><td class="n">13</td><td>Synthea only; see decision 1</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Two sources of truth, routed on purpose</h2>
+    <p>A source value becomes an OMOP concept by one of two routes, and which route it takes is a
+    design decision rather than a convenience. Demographics come from a small file a human signed
+    off. Clinical codes come from the published vocabulary.</p>
+
+    <figure>
+      <div class="scroll">
+        <svg class="d" viewBox="0 0 900 292" role="img"
+             aria-label="The reviewed concept map seed supplies fixed value mappings, while the Athena vocabulary resolves clinical codes by joining on vocabulary and concept code. Both feed the OMOP models.">
+          <defs>
+            <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5"
+                    markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/>
+            </marker>
+          </defs>
+
+          <rect class="box box-a" x="16" y="28" width="320" height="88" rx="3"/>
+          <text class="t" x="32" y="52">concept_map seed</text>
+          <text class="s" x="32" y="70">77 rows, reviewed and closed by hand</text>
+          <text class="s" x="32" y="88">holds the concept_id inline</text>
+          <text class="num" x="32" y="108">'Female' → 8532</text>
+
+          <rect class="box" x="16" y="172" width="320" height="88" rx="3"/>
+          <text class="t" x="32" y="196">VOCAB.CONCEPT</text>
+          <text class="s" x="32" y="214">2,068,712 published concepts from Athena</text>
+          <text class="s" x="32" y="232">looked up at run time</text>
+          <text class="num" x="32" y="252">SNOMED 254837009 → 4112853</text>
+
+          <rect class="box box-a" x="576" y="92" width="308" height="108" rx="3"/>
+          <text class="t" x="592" y="116">OMOP models</text>
+          <text class="s" x="592" y="134">condition · measurement · observation · drug</text>
+          <text class="s" x="592" y="152">person · visit · procedure · death</text>
+          <text class="num" x="592" y="176">conditions, observations, drugs: none unmapped</text>
+
+          <line class="wire wire-a" x1="336" y1="72" x2="572" y2="124" marker-end="url(#a2)"/>
+          <text class="lbl" x="366" y="84">value map, joined on the source string</text>
+
+          <line class="wire" x1="336" y1="216" x2="572" y2="166" marker-end="url(#a2)"/>
+          <text class="lbl" x="366" y="206">code resolve, joined on (vocabulary_id, concept_code)</text>
+        </svg>
+      </div>
+      <figcaption>Nothing is hardcoded in a model. Changing a demographic mapping means editing a
+      33-row CSV and re-running, which is what makes the review gate real rather than
+      ceremonial.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>How the real study files actually arrive</h2>
+    <p>The documented route stopped working. The tarball host resolves in DNS but refuses to
+    complete a TCP connection, on both ports, from this network. Ingest now has two fallbacks, and
+    the last one is needed for exactly one file.</p>
+
+    <figure>
+      <div class="scroll">
+        <svg class="d" viewBox="0 0 900 246" role="img"
+             aria-label="The cBioPortal tarball host is unreachable. Files come from the GitHub datahub instead, and the one file the datahub cannot serve is fetched from the cBioPortal REST API. All land in local staging.">
+          <defs>
+            <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5"
+                    markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/>
+            </marker>
+          </defs>
+
+          <rect class="box box-x" x="16" y="30" width="248" height="72" rx="3"/>
+          <text class="t" x="32" y="54">download.cbioportal.org</text>
+          <text class="s" x="32" y="72">whole-study tarballs</text>
+          <text class="num num-x" x="32" y="92">connect times out</text>
+
+          <line class="wire wire-x" x1="140" y1="102" x2="140" y2="134"/>
+          <line class="wire wire-x" x1="128" y1="112" x2="152" y2="128"/>
+          <line class="wire wire-x" x1="152" y1="112" x2="128" y2="128"/>
+          <text class="lbl" x="164" y="126">abandoned</text>
+
+          <rect class="box" x="326" y="30" width="248" height="72" rx="3"/>
+          <text class="t" x="342" y="54">datahub on GitHub</text>
+          <text class="s" x="342" y="72">public/&lt;study&gt;/, file by file</text>
+          <text class="num" x="342" y="92">7 of 8 files</text>
+
+          <rect class="box box-r" x="326" y="150" width="248" height="72" rx="3"/>
+          <text class="t" x="342" y="174">cBioPortal REST API</text>
+          <text class="s" x="342" y="192">paged, mapped to MAF columns</text>
+          <text class="num num-r" x="342" y="212">84,226 TCGA mutations</text>
+
+          <line class="wire wire-d" x1="450" y1="102" x2="450" y2="146" marker-end="url(#a3)"/>
+          <text class="lbl" x="462" y="130">on HTTP 404</text>
+
+          <rect class="box" x="636" y="86" width="248" height="72" rx="3"/>
+          <text class="t" x="652" y="110">staging/&lt;source&gt;/</text>
+          <text class="s" x="652" y="128">4 files per study, one shape</text>
+          <text class="num" x="652" y="148">both mutation tables, 45 columns</text>
+
+          <line class="wire" x1="574" y1="66"  x2="632" y2="108" marker-end="url(#a3)"/>
+          <line class="wire" x1="574" y1="186" x2="632" y2="142" marker-end="url(#a3)"/>
+        </svg>
+      </div>
+      <figcaption>Pulling files individually instead of a tarball also drops several hundred
+      megabytes of expression and methylation data that no model reads. The API rows are written
+      under METABRIC's column names so both mutation tables stay comparable.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What the review settled</h2>
+    <p>Twelve mappings were marked REVIEW and left unbuilt. All twelve are now closed, plus two
+    follow-ups the review surfaced. Nothing in the seed says REVIEW any more.</p>
+    <ul class="pending">
+      <li>
+        <b>Histology instead of one generic code</b><em>3,677 rows · 8 concepts</em>
+        <span>Every condition record used to carry the same concept, meaning only "breast
+        cancer". Ductal, lobular, mixed, mucinous, metaplastic and angiosarcoma now each resolve
+        to their own SNOMED disorder. This is the decision that makes the OMOP layer worth
+        querying.</span>
+      </li>
+      <li>
+        <b>Death declined, survival kept</b><em>NOT_MAPPED</em>
+        <span>METABRIC carries no calendar date of any kind, only intervals, so a death date
+        could only be invented. The mapping is refused with the reason recorded, and survival
+        time is carried as an observation in months instead, for deceased and living patients
+        alike so censored follow-up survives.</span>
+      </li>
+      <li>
+        <b>Concept and value are different questions</b><em>8,077 rows</em>
+        <span>Coding what a value means does not code what is being observed. Vital status,
+        stage and grade had correct values sitting under an observation concept of 0 until both
+        columns were mapped. Grade then moved to MEASUREMENT, because OMOP routes a row by its
+        concept's domain.</span>
+      </li>
+      <li>
+        <b>Stage, without inventing an edition</b><em>2,853 rows</em>
+        <span>TCGA names real substages, so those map to AJCC 7th pathological concepts.
+        METABRIC gives bare integers and states neither edition nor whether staging was
+        clinical, so it uses generic stage concepts that assert none of it.</span>
+      </li>
+    </ul>
+  </section>
+
+  <footer>
+    Current as of the run after the concept-map review closed. Thirty models, 90 of 91 nodes
+    passing with one warning and no errors, no dbt deprecations, and reconciliation showing a
+    delta of zero on every check that must be zero: patient flow-through per source, concept
+    mapping on four tables, and row-count parity between all eight OMOP fact tables and their
+    de-identified counterparts.
+  </footer>
+
+</div>

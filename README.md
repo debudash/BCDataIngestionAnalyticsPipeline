@@ -57,7 +57,8 @@ Each stage emits a **design/rationale**, **validation criteria**, and **novelty*
 
 Stage 2 is the intellectual core. The dbt models do **not** hardcode mappings — the reviewed
 `seeds/concept_map.csv` is loaded as a table (`dbt seed`) and the OMOP models **join against
-it**. That file is rendered for human review as the **OMOP Concept Mapping** artifact.
+it**. That file is rendered for human review as `artifacts/concept_map_review.html`, which
+carries the source distributions, the candidate concepts and the reasoning behind each row.
 **Review and approve it before trusting Stage 2 output.** Standard-demographic `concept_id`s
 are stable and included; clinical codes are resolved by joining the Athena `CONCEPT` vocabulary
 on `(vocabulary_id, concept_code)`.
@@ -88,6 +89,8 @@ analyses/reconciliation.sql  # compiled, not run: raw -> OMOP -> ANALYTICS compl
 tests/                       # singular data-quality tests
 run_pipeline.py              # Python EL, then dbt deps + build
 artifacts/                   # per-stage rationale / validation / novelty notes
+  architecture.html          #   the solution architecture, 3 diagrams (open in a browser)
+  concept_map_review.html    #   why each concept_map row says what it says
 ```
 
 ## 6. Run
