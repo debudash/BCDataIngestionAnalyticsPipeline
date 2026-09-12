@@ -1,10 +1,21 @@
--- Crosswalk linking a genomic sample to an OMOP person, so genomic rows can be
--- analyzed at the cohort level. Populates as clinical person models for the real
--- sources are added (today PERSON is built from Synthea).
+-- Crosswalk linking a genomic sample to an OMOP person, so mutation rows can be analysed at
+-- the cohort level. Both real sources are covered: the mutation files key on the sample
+-- barcode, while PERSON keys on the patient identifier, and only the clinical sample file
+-- carries both.
+--
+-- Reads the staging views rather than RAW so the column names are cleaned in one place.
+with samples as (
+    select 'metabric' as source, sample_id, person_source_value
+    from {{ ref('stg_metabric__sample') }}
+    union all
+    select 'tcga_brca', sample_id, person_source_value
+    from {{ ref('stg_tcga_brca__sample') }}
+)
 select
-    s."SAMPLE_ID"   as sample_id,
-    s."PATIENT_ID"  as patient_id,
+    s.source,
+    s.sample_id,
+    s.person_source_value as patient_id,
     p.person_id
-from {{ source('raw', 'metabric__data_clinical_sample') }} s
+from samples s
 left join {{ ref('person') }} p
-       on p.person_source_value = s."PATIENT_ID"
+       on p.person_source_value = s.person_source_value

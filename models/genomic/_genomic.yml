@@ -1,0 +1,23 @@
+version: 2
+
+models:
+  - name: sample_person
+    description: >
+      Sample-to-person crosswalk for the genomic parallel layer. Mutation files key on the
+      sample barcode; PERSON keys on the patient identifier. Without this, genomic rows
+      cannot be filtered to a cohort.
+    columns:
+      - name: sample_id
+        description: The barcode the mutation files join on.
+        tests:
+          - not_null
+          - unique
+      - name: person_id
+        description: Null would mean a sample whose patient never became an OMOP person.
+        tests:
+          - not_null
+          - relationships: { to: ref('person'), field: person_id }
+      - name: source
+        tests:
+          - accepted_values:
+              values: ["metabric", "tcga_brca"]
