@@ -51,6 +51,22 @@ models:
                 severity: warn
                 where: "value_as_concept_id is null"
 
+  - name: drug_exposure
+    description: >
+      Synthea medication dispenses. Single-source by nature: neither METABRIC nor TCGA-BRCA
+      ships treatment records. RxNorm codes resolve through the vocabulary, no human mapping.
+    columns:
+      - name: drug_exposure_id
+        tests: [not_null, unique]
+      - name: person_id
+        tests:
+          - not_null
+          - relationships: { to: ref('person'), field: person_id }
+      - name: drug_concept_id
+        description: 0 means the RxNorm code is absent from the loaded vocabulary.
+        tests:
+          - not_null
+
   - name: death
     columns:
       - name: person_id

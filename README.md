@@ -29,7 +29,7 @@ quality checks are **dbt tests**.
 
 | # | Source | Type | Content | Access |
 |---|---|---|---|---|
-| 1 | Synthea mCODE breast cancer | Synthetic | Clinical (SNOMED/LOINC/RxNorm-coded) | Generated / GitHub |
+| 1 | Synthea mCODE breast cancer | Synthetic | Clinical (SNOMED/LOINC/RxNorm-coded) | Generated locally, `-p 5000` |
 | 2 | METABRIC (`brca_metabric`) | Real | Clinical + genomic | cBioPortal datahub (GitHub) |
 | 3 | TCGA-BRCA (`brca_tcga_pan_can_atlas_2018`) | Real | Clinical + genomic | cBioPortal datahub (GitHub) + REST API |
 
@@ -62,6 +62,14 @@ it**. That file is rendered for human review as the **OMOP Concept Mapping** art
 are stable and included; clinical codes are resolved by joining the Athena `CONCEPT` vocabulary
 on `(vocabulary_id, concept_code)`.
 
+That review has been done. The seed carries 77 rows and **no `REVIEW` rows remain**: 69
+`STANDARD`, 5 `RESOLVE_AT_ETL` (the vocabulary does the work, no human decision needed), 2
+`PARALLEL_LAYER`, and 1 `NOT_MAPPED`. That last status is the point of the gate — it records a
+mapping that was examined and *declined*, with the reason in `notes`, so it reads differently
+from one nobody has looked at. METABRIC's death date is the example: the study carries no
+calendar date at all, only intervals, so a `death_date` could only be invented. Survival time
+is carried as an observation in months instead.
+
 ## 5. Layout
 
 ```
@@ -72,10 +80,11 @@ src/stage1_ingest/           # download Synthea + cBioPortal; load RAW + VOCAB (
 dbt_project.yml              # dbt project (Stages 2-4)
 profiles.yml · packages.yml  # dbt connection (env_var) + package deps
 macros/                      # schema-naming helper
-models/staging/              # views cleaning RAW
+models/staging/              # views cleaning RAW (9 files)
 models/omop/                 # OMOP CDM v5.4 models + tests (Stage 2 + Stage 3)
-models/genomic/              # parallel non-OMOP layer
+models/genomic/              # parallel non-OMOP layer + sample->person crosswalk
 models/analytics/            # Safe Harbor de-identified models (Stage 4)
+analyses/reconciliation.sql  # compiled, not run: raw -> OMOP -> ANALYTICS completeness
 tests/                       # singular data-quality tests
 run_pipeline.py              # Python EL, then dbt deps + build
 artifacts/                   # per-stage rationale / validation / novelty notes
@@ -116,28 +125,57 @@ unactivated venv fails at stage 2 with *[WinError 2] The system cannot find the 
 
 | Table | Rows |
 |---|---|
-| `OMOP.PERSON` | 4,093 (METABRIC 2,509 · TCGA 1,084 · Synthea 500) |
-| `OMOP.MEASUREMENT` | 24,089 |
-| `OMOP.OBSERVATION` | 10,575 |
-| `OMOP.VISIT_OCCURRENCE` | 4,822 |
-| `OMOP.CONDITION_OCCURRENCE` | 3,599 (all resolved to a real `concept_id`) |
-| `GENOMIC.SAMPLE_PERSON` | 2,509 |
-| `ANALYTICS.UNIQUE_PATIENTS` | 4,093 |
-| `OMOP.DEATH` | 0 |
+| `OMOP.MEASUREMENT` | 163,055 |
+| `ANALYTICS.MUTATIONS_DEID` | 101,498 |
+| `OMOP.VISIT_OCCURRENCE` | 48,943 |
+| `OMOP.OBSERVATION` | 10,047 |
+| `OMOP.PERSON` | 8,606 (Synthea 5,013 · METABRIC 2,509 · TCGA 1,084) |
+| `OMOP.CONDITION_OCCURRENCE` | 3,677 |
+| `GENOMIC.SAMPLE_PERSON` | 3,593 |
+| `OMOP.DRUG_EXPOSURE` | 224 |
+| `OMOP.DEATH` | 13 |
 
-`dbt test` ends **PASS=26 WARN=1 ERROR=0**. The warning is
-`not_null_measurement_value_as_number`: receptor status is text held in `value_source_value`,
-and mapping Positive/Negative to a standard `value_as_concept_id` is a REVIEW item.
+`dbt build` ends **PASS=78 WARN=1 ERROR=0** across 79 nodes.
 
-Three empty-looking results that are correct, not bugs:
+**Three tables have nothing unmapped**: every row in `CONDITION_OCCURRENCE`, `OBSERVATION` and
+`DRUG_EXPOSURE` carries a real `concept_id`, not 0. That is the pay-off from the concept-map
+review (below) plus a vocabulary that covers every RxNorm code Synthea emits.
 
-- **`DEATH` is empty.** No Synthea patient has a death date, and METABRIC's `OS_STATUS`
-  (`0:LIVING` / `1:DECEASED`) is a REVIEW row — survival months only approximate a death date,
-  so the mapping is deliberately unbuilt.
-- **`year_of_birth` is null for 3,593 of 4,093 people.** Only Synthea carries birth dates; the
-  real sources give age at diagnosis, and deriving a birth year from it is another REVIEW item.
-- **15,258 measurements map to `concept_id = 0`.** All of them are Synthea's QALY, DALY and
+Two results that look wrong and are not:
+
+- **151,683 measurements map to `concept_id = 0`.** All of them are Synthea's QALY, DALY and
   QOLS quality-of-life scores, which have no LOINC equivalent. The vocabulary is working.
+- **`year_of_birth` is null for most people.** Only Synthea carries birth dates. The real
+  sources give age at diagnosis, and deriving a birth year from an age would invent precision
+  the source never recorded, so the map declines it.
+
+The one warning, `not_null_measurement_value_as_number`, flags 161 rows carrying neither a
+number nor a coded value: METABRIC receptor and grade results recorded as `NA`.
+
+### The de-identified base (Stage 4)
+
+`ANALYTICS` is the deliverable, and it implements **HIPAA Safe Harbor**, not a date shift:
+
+- Every date tied to a person is truncated to its **year**. Safe Harbor permits nothing finer.
+  A consistent per-patient shift would preserve intervals but is a **Limited Data Set**, a
+  different legal basis requiring a data use agreement.
+- Source identifiers are dropped; ages over 89 are aggregated by flooring the birth year.
+- One de-identified model per clinical table, plus `mutations_deid` keyed on `person_id` with
+  the sample barcodes removed, and `unique_patients` as the roster.
+
+Verify the date rule structurally rather than by sampling — this must return nothing:
+```sql
+select table_name, column_name, data_type
+from BREAST_CANCER.INFORMATION_SCHEMA.COLUMNS
+where table_schema = 'ANALYTICS'
+  and (data_type like '%DATE%' or data_type like '%TIMESTAMP%');
+```
+
+> **Genomic caveat.** `mutations_deid` drops the sample and matched-normal barcodes, which
+> removes the *direct* identifiers. It does not make a genome-wide variant profile safe to
+> publish: enough variants uniquely distinguish an individual and can be matched against other
+> genomic datasets. Safe Harbor's eighteen identifiers do not name sequence data, and whether
+> it falls under "any other unique identifying characteristic" is contested, not settled.
 
 ### Verifying completeness
 

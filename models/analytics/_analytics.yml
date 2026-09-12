@@ -70,6 +70,14 @@ models:
           - accepted_values:
               values: ["metabric", "tcga_brca"]
 
+  - name: drug_exposure_deid
+    description: Safe Harbor DRUG_EXPOSURE. Years only; free-text drug name dropped.
+    columns:
+      - name: person_id
+        tests:
+          - not_null
+          - relationships: { to: ref('person_deid'), field: person_id }
+
   - name: unique_patients
     description: De-identified roster, one row per person, built only from de-identified models.
     columns:
