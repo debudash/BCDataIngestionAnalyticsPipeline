@@ -5,8 +5,9 @@
 --   vital status  -> SNOMED Alive / Dead        (decision 2)
 --   grade         -> Nottingham grade 1/2/3     (decision 7)
 --   AJCC stage    -> AJCC 7th pathological      (decision 6; STAGE X stays unmapped)
--- METABRIC's TUMOR_STAGE is still REVIEW (decision 5): bare integers with no stated AJCC
--- edition, so the number is kept in value_as_number and no concept is asserted.
+--   METABRIC stage -> generic Stage 0-4          (decision 5; no AJCC edition and no
+--                                                 clinical/pathological claim asserted,
+--                                                 because METABRIC states neither)
 -- The raw string is always preserved in value_source_value.
 with concept as (
     select concept_id, vocabulary_id, concept_code, standard_concept

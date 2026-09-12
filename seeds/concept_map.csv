@@ -18,7 +18,6 @@ metabric,data_clinical_patient.SEX,Female,person,gender_concept_id,Gender,Gender
 metabric,data_clinical_patient.SEX,Male,person,gender_concept_id,Gender,Gender,M,8507,STANDARD,Normalize Male->8507.
 metabric,data_clinical_patient.AGE_AT_DIAGNOSIS,,observation,value_as_number,Observation,LOINC,30525-0,,RESOLVE_AT_ETL,Age at diagnosis; birth_datetime derived.
 metabric,data_clinical_patient.OS_STATUS,DECEASED,death,death_date,,,,,NOT_MAPPED,Decision 1: METABRIC has no calendar date (only AGE_AT_DIAGNOSIS / OS_MONTHS / RFS_MONTHS) so a death_date cannot be derived; DEATH stays empty by decision.
-metabric,data_clinical_sample.TUMOR_STAGE,,observation,value_as_number,Observation,SNOMED,,,REVIEW,Stage; map to AJCC staging observation concept.
 metabric,data_clinical_sample.TUMOR_SIZE,,measurement,value_as_number,Measurement,LOINC,21889-1,,STANDARD,Decision 8: value stays numeric in mm; unit_concept_id set below.
 tcga_brca,data_clinical_patient.SEX,,person,gender_concept_id,Gender,Gender,,,STANDARD,Same normalization as METABRIC SEX.
 metabric,data_mutations.ALL,,GENOMIC_RAW,,,,,,PARALLEL_LAYER,Mutations kept raw; linked to person via sample->person crosswalk.
@@ -65,3 +64,8 @@ tcga_brca,data_clinical_patient.AJCC_PATHOLOGIC_TUMOR_STAGE,STAGE IIIB,observati
 tcga_brca,data_clinical_patient.AJCC_PATHOLOGIC_TUMOR_STAGE,STAGE IIIC,observation,value_as_concept_id,Observation,Cancer Modifier,,1634299,STANDARD,Decision 6: AJCC 7th edition pathological; STAGE X is unstageable and stays unmapped.
 tcga_brca,data_clinical_patient.AJCC_PATHOLOGIC_TUMOR_STAGE,STAGE IV,observation,value_as_concept_id,Observation,Cancer Modifier,,1635230,STANDARD,Decision 6: AJCC 7th edition pathological; STAGE X is unstageable and stays unmapped.
 metabric,data_clinical_sample.TUMOR_SIZE,,measurement,unit_concept_id,Unit,UCUM,mm,8588,STANDARD,Decision 8: millimetre; mean 26.2 and max 182 confirm mm not cm.
+metabric,data_clinical_sample.TUMOR_STAGE,0,observation,value_as_concept_id,Observation,Cancer Modifier,,1634946,STANDARD,Decision 5: generic stage; METABRIC states no AJCC edition and does not say whether staging was clinical or pathological so neither is asserted. NA stays unmapped.
+metabric,data_clinical_sample.TUMOR_STAGE,1,observation,value_as_concept_id,Observation,Cancer Modifier,,1635838,STANDARD,Decision 5: generic stage; METABRIC states no AJCC edition and does not say whether staging was clinical or pathological so neither is asserted. NA stays unmapped.
+metabric,data_clinical_sample.TUMOR_STAGE,2,observation,value_as_concept_id,Observation,Cancer Modifier,,1635131,STANDARD,Decision 5: generic stage; METABRIC states no AJCC edition and does not say whether staging was clinical or pathological so neither is asserted. NA stays unmapped.
+metabric,data_clinical_sample.TUMOR_STAGE,3,observation,value_as_concept_id,Observation,Cancer Modifier,,1634191,STANDARD,Decision 5: generic stage; METABRIC states no AJCC edition and does not say whether staging was clinical or pathological so neither is asserted. NA stays unmapped.
+metabric,data_clinical_sample.TUMOR_STAGE,4,observation,value_as_concept_id,Observation,Cancer Modifier,,1633987,STANDARD,Decision 5: generic stage; METABRIC states no AJCC edition and does not say whether staging was clinical or pathological so neither is asserted. NA stays unmapped.
