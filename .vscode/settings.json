@@ -1,0 +1,26 @@
+{
+  // JSON formatting uses VS Code's built-in language support. No extension needed.
+  // Shift+Alt+F formats the open document at any time.
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.formatOnSave": true
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.formatOnSave": true
+  },
+
+  // dbt writes target/*.json minified onto a single line. manifest.json is ~1.6 MB, which
+  // is past the point where folding and the outline stay responsive, so raise the limit
+  // rather than let large artifacts silently lose structure.
+  "json.maxItemsComputed": 30000,
+
+  // These are build outputs: regenerated on every run and git-ignored. Hiding them from
+  // search keeps results about the project rather than about its artifacts.
+  "search.exclude": {
+    "target/**": true,
+    "dbt_packages/**": true,
+    "logs/**": true,
+    "staging/**": true
+  }
+}
