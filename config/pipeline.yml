@@ -15,13 +15,20 @@ sources:
   - name: metabric
     kind: real
     study_id: brca_metabric
-    url: "https://download.cbioportal.org/brca_metabric.tar.gz"
     local_dir: "./staging/metabric"
   - name: tcga_brca
     kind: real
     study_id: brca_tcga_pan_can_atlas_2018
-    url: "https://download.cbioportal.org/brca_tcga_pan_can_atlas_2018.tar.gz"
     local_dir: "./staging/tcga_brca"
+
+# cBioPortal studies are pulled file-by-file from the datahub repo on GitHub.
+# (download.cbioportal.org, which serves whole-study tarballs, is unreachable from
+# some networks; the datahub holds the same flat files under public/<study_id>/.)
+cbioportal_base_url: "https://media.githubusercontent.com/media/cBioPortal/datahub/master/public"
+
+# Fallback for study files the datahub is missing: the public cBioPortal REST API.
+# Used today for TCGA-BRCA mutations, whose datahub LFS object is absent upstream.
+cbioportal_api_url: "https://www.cbioportal.org/api"
 
 # Which cBioPortal files are clinical (-> OMOP) vs genomic (-> parallel layer).
 cbioportal_files:
