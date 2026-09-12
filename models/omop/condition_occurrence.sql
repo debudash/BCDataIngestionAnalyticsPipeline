@@ -1,14 +1,19 @@
 -- OMOP CONDITION_OCCURRENCE across sources.
 --  * Synthea: SNOMED-coded condition events, resolved via the Athena CONCEPT vocabulary.
---  * METABRIC / TCGA: one breast-cancer diagnosis per sample, using the fixed concept the
---    concept_map seed assigns to CANCER_TYPE_DETAILED (SNOMED 254837009 -> concept 4112853).
+--  * METABRIC / TCGA: one diagnosis per sample. CANCER_TYPE_DETAILED is matched against the
+--    concept_map seed (decision 3), so ductal, lobular, mixed and mucinous each land on their
+--    own SNOMED disorder instead of a single generic breast-cancer concept. Both studies use
+--    the same wording, so one set of seed rows per source covers them.
 with concept as (
     select concept_id, vocabulary_id, concept_code, standard_concept
     from {{ source('omop_vocab', 'concept') }}
 ),
-cancer_concept as (
-    select max(concept_id) as concept_id from {{ ref('concept_map') }}
-    where source_field like '%CANCER_TYPE_DETAILED%' and concept_id is not null
+histology as (
+    select source, source_value, concept_id
+    from {{ ref('concept_map') }}
+    where omop_field = 'condition_concept_id'
+      and review_status = 'STANDARD'
+      and nullif(source_value, '') is not null
 ),
 synthea as (
     select p.person_id,
@@ -24,16 +29,20 @@ synthea as (
 ),
 real_dx as (
     select p.person_id,
-           (select concept_id from cancer_concept) as condition_concept_id,
-           cast(null as date) as condition_start_date,
-           s.cancer_type_detailed as condition_source_value,
-           '254837009' as source_code
+           coalesce(h.concept_id, 0) as condition_concept_id,
+           cast(null as date)        as condition_start_date,
+           s.cancer_type_detailed    as condition_source_value,
+           cast(null as varchar)     as source_code
     from (
-        select person_source_value, cancer_type_detailed from {{ ref('stg_metabric__sample') }}
+        select 'metabric'  as source, person_source_value, cancer_type_detailed
+        from {{ ref('stg_metabric__sample') }}
         union all
-        select person_source_value, cancer_type_detailed from {{ ref('stg_tcga_brca__sample') }}
+        select 'tcga_brca', person_source_value, cancer_type_detailed
+        from {{ ref('stg_tcga_brca__sample') }}
     ) s
     join {{ ref('person') }} p on p.person_source_value = s.person_source_value
+    left join histology h
+           on h.source = s.source and h.source_value = s.cancer_type_detailed
 ),
 combined as (
     select * from synthea

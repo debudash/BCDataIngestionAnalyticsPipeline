@@ -7,10 +7,13 @@ seeds:
       OMOP models join against it. The "OMOP Concept Map Review" artifact renders this file.
     columns:
       - name: review_status
-        description: STANDARD | RESOLVE_AT_ETL | REVIEW | PARALLEL_LAYER
+        description: >
+          STANDARD (approved) | RESOLVE_AT_ETL (looked up in the vocabulary) |
+          REVIEW (awaiting sign-off) | NOT_MAPPED (reviewed and declined, with the reason
+          in notes) | PARALLEL_LAYER (kept outside OMOP)
         tests:
           - accepted_values:
-              values: ["STANDARD", "RESOLVE_AT_ETL", "REVIEW", "PARALLEL_LAYER"]
+              values: ["STANDARD", "RESOLVE_AT_ETL", "REVIEW", "NOT_MAPPED", "PARALLEL_LAYER"]
       - name: source
         tests:
           - accepted_values:

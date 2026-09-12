@@ -43,7 +43,13 @@ models:
           - relationships: { to: ref('person'), field: person_id }
       - name: value_as_number
         tests:
-          - not_null: { config: { severity: warn } }    # completeness
+          # Completeness: a measurement should carry a result. A receptor status is a
+          # coded value, not a number, so rows that resolved to a value_as_concept_id
+          # are excluded rather than counted as missing.
+          - not_null:
+              config:
+                severity: warn
+                where: "value_as_concept_id is null"
 
   - name: death
     columns:
