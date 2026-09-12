@@ -1,7 +1,12 @@
-"""Snowflake connection (key-pair auth) plus two helpers: run_sql and load_dataframe.
+"""Snowflake connection plus two helpers: run_sql and load_dataframe.
 
-Key-pair auth keeps secrets out of the code: we read a PKCS8 private key the user
-generated and registered on their Snowflake user. We never see or store a password.
+Two auth methods, chosen by SNOWFLAKE_AUTHENTICATOR in .env:
+  externalbrowser - browser SSO. The connector caches the token after the first
+                    prompt, so a run that opens many connections asks once, not once
+                    per table.
+  unset           - key-pair. We read a PKCS8 private key the user generated and
+                    registered on their Snowflake user.
+Either way no password is stored in the project.
 """
 from pathlib import Path
 from cryptography.hazmat.backends import default_backend
@@ -29,14 +34,21 @@ def _private_key_bytes() -> bytes:
 
 def connect():
     sf = settings.snowflake
-    return snowflake.connector.connect(
+    common = dict(
         account=sf["account"],
         user=sf["user"],
         role=sf["role"],
         warehouse=sf["warehouse"],
         database=sf["database"],
-        private_key=_private_key_bytes(),
     )
+    if sf["authenticator"]:
+        return snowflake.connector.connect(
+            **common,
+            authenticator=sf["authenticator"],
+            # Cache the SSO token so we prompt once per run, not once per connection.
+            client_store_temporary_credential=True,
+        )
+    return snowflake.connector.connect(**common, private_key=_private_key_bytes())
 
 
 def run_sql(sql: str, schema: str | None = None) -> list:

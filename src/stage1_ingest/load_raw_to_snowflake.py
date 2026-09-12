@@ -20,7 +20,10 @@ def _stage_files(source: dict) -> list[Path]:
     base = settings.root / source["local_dir"]
     if source["kind"] == "synthetic":
         return sorted((base / "csv").glob("*.csv"))
-    return sorted(base.rglob("data_clinical_*.txt")) + sorted(base.rglob("data_*.txt"))
+    # clinical first, then the rest; dict.fromkeys drops the overlap between the
+    # two patterns so a clinical file is not read and loaded twice.
+    ordered = sorted(base.rglob("data_clinical_*.txt")) + sorted(base.rglob("data_*.txt"))
+    return list(dict.fromkeys(ordered))
 
 
 def run() -> None:

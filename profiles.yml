@@ -12,7 +12,10 @@ breast_cancer_omop:
       role: "{{ env_var('SNOWFLAKE_ROLE', 'SYSADMIN') }}"
       warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'COMPUTE_WH') }}"
       database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
-      # Key-pair auth — no password in the profile.
+      # Auth mirrors src/common/snowflake_io.py. Default is key-pair: 'snowflake' is the
+      # plain authenticator, and the private key below is what actually signs us in.
+      # Set SNOWFLAKE_AUTHENTICATOR=externalbrowser for browser SSO instead.
+      authenticator: "{{ env_var('SNOWFLAKE_AUTHENTICATOR', 'snowflake') }}"
       private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH') }}"
       private_key_passphrase: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE', '') }}"
       schema: OMOP          # default; per-folder schemas set in dbt_project.yml

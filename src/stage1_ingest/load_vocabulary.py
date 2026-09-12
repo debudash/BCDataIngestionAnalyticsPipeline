@@ -20,6 +20,9 @@ def run() -> None:
               f"Download from https://athena.ohdsi.org")
         return
     df = pd.read_csv(path, sep="\t", dtype=str, keep_default_na=False, usecols=COLS)
+    # Athena ships lowercase headers; every other RAW table lands uppercase. Match
+    # them, so the dbt models can say concept_id rather than "concept_id".
+    df.columns = [c.upper() for c in df.columns]
     n = load_dataframe(df, "CONCEPT", "VOCAB")
     print(f"[stage1] loaded VOCAB.CONCEPT: {n} rows")
 

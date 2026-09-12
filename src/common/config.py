@@ -44,7 +44,9 @@ class Settings:
             "role": os.environ.get("SNOWFLAKE_ROLE", "SYSADMIN"),
             "warehouse": os.environ.get("SNOWFLAKE_WAREHOUSE", "COMPUTE_WH"),
             "database": os.environ["SNOWFLAKE_DATABASE"],
-            "private_key_path": os.environ["SNOWFLAKE_PRIVATE_KEY_PATH"],
+            # Auth is either browser SSO or key-pair; see snowflake_io.connect().
+            "authenticator": os.environ.get("SNOWFLAKE_AUTHENTICATOR"),
+            "private_key_path": os.environ.get("SNOWFLAKE_PRIVATE_KEY_PATH"),
             "private_key_passphrase": os.environ.get("SNOWFLAKE_PRIVATE_KEY_PASSPHRASE"),
         }
 
