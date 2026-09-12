@@ -2,17 +2,76 @@ version: 2
 
 models:
   - name: person_deid
-    description: Safe Harbor de-identified PERSON. No names, no source ids, birth year only.
+    description: >
+      Safe Harbor de-identified PERSON. No names, no source ids, birth year only, ages over
+      89 aggregated by flooring the birth year.
     columns:
       - name: person_id
         tests: [not_null, unique]
       - name: year_of_birth
+        description: Year only. Never finer, and never implying an age above 89.
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1936        # 2026 - 90: nobody older than the Safe Harbor cap
-              max_value: 2026
+              # Bounds track the current year, so the Safe Harbor cap cannot go stale.
+              min_value: "{{ modules.datetime.date.today().year - 90 }}"
+              max_value: "{{ modules.datetime.date.today().year }}"
               row_condition: "year_of_birth is not null"
+
+  - name: condition_occurrence_deid
+    description: Safe Harbor CONDITION_OCCURRENCE. Year only; free-text source value dropped.
+    columns:
+      - name: person_id
+        tests:
+          - not_null
+          - relationships: { to: ref('person_deid'), field: person_id }
+      - name: condition_start_year
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1900
+              max_value: "{{ modules.datetime.date.today().year }}"
+              row_condition: "condition_start_year is not null"
+
+  - name: measurement_deid
+    description: Safe Harbor MEASUREMENT. Year only; concepts, values and units retained.
+    columns:
+      - name: person_id
+        tests:
+          - not_null
+          - relationships: { to: ref('person_deid'), field: person_id }
+
+  - name: observation_deid
+    description: Safe Harbor OBSERVATION. Year only; survival time stays an interval.
+    columns:
+      - name: person_id
+        tests:
+          - not_null
+          - relationships: { to: ref('person_deid'), field: person_id }
+
+  - name: visit_occurrence_deid
+    description: Safe Harbor VISIT_OCCURRENCE. Both dates truncated to year.
+    columns:
+      - name: person_id
+        tests:
+          - not_null
+          - relationships: { to: ref('person_deid'), field: person_id }
+
+  - name: mutations_deid
+    description: >
+      Variant calls keyed on person_id, with sample and matched-normal barcodes removed.
+      See the model header: barcode removal handles the direct identifiers, but a
+      genome-wide variant profile is itself potentially re-identifying.
+    columns:
+      - name: person_id
+        tests:
+          - not_null
+          - relationships: { to: ref('person_deid'), field: person_id }
+      - name: source
+        tests:
+          - accepted_values:
+              values: ["metabric", "tcga_brca"]
+
   - name: unique_patients
+    description: De-identified roster, one row per person, built only from de-identified models.
     columns:
       - name: person_id
         tests: [not_null, unique]
