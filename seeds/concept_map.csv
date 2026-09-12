@@ -17,7 +17,7 @@ synthea,encounters.Id,,visit_occurrence,visit_occurrence_id,,,,,STANDARD,Encount
 metabric,data_clinical_patient.SEX,Female,person,gender_concept_id,Gender,Gender,F,8532,STANDARD,Normalize Female->8532.
 metabric,data_clinical_patient.SEX,Male,person,gender_concept_id,Gender,Gender,M,8507,STANDARD,Normalize Male->8507.
 metabric,data_clinical_patient.AGE_AT_DIAGNOSIS,,observation,value_as_number,Observation,LOINC,30525-0,,RESOLVE_AT_ETL,Age at diagnosis; birth_datetime derived.
-metabric,data_clinical_patient.OS_STATUS,DECEASED,death,death_date,,,,,NOT_MAPPED,Decision 1: METABRIC has no calendar date (only AGE_AT_DIAGNOSIS / OS_MONTHS / RFS_MONTHS) so a death_date cannot be derived; DEATH stays empty by decision.
+metabric,data_clinical_patient.OS_STATUS,DECEASED,death,death_date,,,,,NOT_MAPPED,Decision 1: METABRIC has no calendar date (only AGE_AT_DIAGNOSIS / OS_MONTHS / RFS_MONTHS) so a death_date cannot be derived; DEATH stays empty by decision. Survival time is carried as an observation instead (decision 10).
 metabric,data_clinical_sample.TUMOR_SIZE,,measurement,value_as_number,Measurement,LOINC,21889-1,,STANDARD,Decision 8: value stays numeric in mm; unit_concept_id set below.
 tcga_brca,data_clinical_patient.SEX,,person,gender_concept_id,Gender,Gender,,,STANDARD,Same normalization as METABRIC SEX.
 metabric,data_mutations.ALL,,GENOMIC_RAW,,,,,,PARALLEL_LAYER,Mutations kept raw; linked to person via sample->person crosswalk.
@@ -74,3 +74,5 @@ metabric,data_clinical_patient.VITAL_STATUS,,observation,observation_concept_id,
 metabric,data_clinical_sample.TUMOR_STAGE,,observation,observation_concept_id,Observation,SNOMED,399390009,4219603,STANDARD,Decision 9: TNM stage grouping; neutral on clinical vs pathological as METABRIC is.
 tcga_brca,data_clinical_patient.AJCC_PATHOLOGIC_TUMOR_STAGE,,observation,observation_concept_id,Observation,SNOMED,399588009,4221515,STANDARD,Decision 9: Pathologic TNM stage grouping; TCGA states the staging is pathological.
 metabric,data_clinical_sample.GRADE,,measurement,measurement_concept_id,Measurement,LOINC,44648-4,3047285,STANDARD,Decision 9: Histologic grade [Score] in Breast cancer specimen by Nottingham; pairs with the Nottingham value concepts.
+metabric,data_clinical_patient.OS_MONTHS,,observation,observation_concept_id,Observation,SNOMED,445320007,40482950,STANDARD,"Decision 10: survival time. For the 1,144 deceased this is survival; for the 837 living it is censored follow-up. Both are kept because survival analysis needs censored observations too; vital status tells them apart."
+metabric,data_clinical_patient.OS_MONTHS,,observation,unit_concept_id,Unit,UCUM,mo,9580,STANDARD,Decision 10: months.

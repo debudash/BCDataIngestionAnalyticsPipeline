@@ -1,5 +1,6 @@
 -- OMOP OBSERVATION — real-source clinical attributes that aren't measurements:
--- age at diagnosis, tumour stage (METABRIC) and AJCC stage (TCGA), vital status.
+-- age at diagnosis, survival time, tumour stage (METABRIC), AJCC stage (TCGA),
+-- vital status.
 --
 -- Both concepts come from the concept_map seed, so the file says what every column means:
 --   observation_concept_id  what is being observed  (decision 9)
@@ -12,6 +13,12 @@ with obs_concept as (
     select source, source_field, concept_id
     from {{ ref('concept_map') }}
     where omop_field = 'observation_concept_id' and review_status = 'STANDARD'
+),
+obs_unit as (
+    select source, source_field, concept_id
+    from {{ ref('concept_map') }}
+    where omop_field = 'unit_concept_id' and omop_table = 'observation'
+      and review_status = 'STANDARD'
 ),
 value_map as (
     select source, source_field, source_value, concept_id
@@ -35,6 +42,13 @@ attrs as (
            person_source_value, try_to_double(tumor_stage), tumor_stage, 'Tumor stage'
     from {{ ref('stg_metabric__sample') }}
     union all
+    -- Survival time. METABRIC has no dates, so DEATH stays empty (decision 1) and the
+    -- interval is carried here instead. Deceased rows are survival; living rows are
+    -- censored follow-up. Vital status separates them. Decision 10.
+    select 'metabric', 'data_clinical_patient.OS_MONTHS',
+           person_source_value, os_months, cast(null as varchar), 'Survival time'
+    from {{ ref('stg_metabric__patient') }}
+    union all
     select 'tcga_brca', 'data_clinical_patient.AJCC_PATHOLOGIC_TUMOR_STAGE',
            person_source_value, null, ajcc_stage, 'AJCC stage'
     from {{ ref('stg_tcga_brca__patient') }}
@@ -47,11 +61,14 @@ select
     a.value_num                as value_as_number,
     vm.concept_id              as value_as_concept_id,
     a.value_txt                as value_source_value,
+    ou.concept_id              as unit_concept_id,
     a.label                    as observation_source_value
 from attrs a
 join {{ ref('person') }} p on p.person_source_value = a.person_source_value
 left join obs_concept oc
        on oc.source = a.source and oc.source_field = a.source_field
+left join obs_unit ou
+       on ou.source = a.source and ou.source_field = a.source_field
 left join value_map vm
        on vm.source = a.source
       and vm.source_field = a.source_field
