@@ -106,6 +106,38 @@ models:
         tests:
           - not_null
 
+  - name: observation_period
+    description: >
+      The span each person was under observation. OHDSI tooling (ATLAS, Achilles, DQD) bounds
+      its logic by this table, so a person without a row here is invisible to those tools.
+      Synthea only: the real sources carry no calendar dates to derive a period from.
+    columns:
+      - name: observation_period_id
+        tests: [not_null, unique]
+      - name: person_id
+        description: One continuous period per person, so this is unique here.
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('person')
+                field: person_id
+      - name: observation_period_start_date
+        tests:
+          - not_null
+      - name: observation_period_end_date
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= observation_period_start_date"
+      - name: period_type_concept_id
+        tests:
+          - accepted_values:
+              arguments:
+                values: [32817]
+
   - name: death
     columns:
       - name: person_id

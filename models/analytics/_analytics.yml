@@ -110,6 +110,18 @@ models:
                 to: ref('person_deid')
                 field: person_id
 
+  - name: observation_period_deid
+    description: Safe Harbor OBSERVATION_PERIOD. Both bounds truncated to year.
+    columns:
+      - name: person_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('person_deid')
+                field: person_id
+
   - name: unique_patients
     description: De-identified roster, one row per person, built only from de-identified models.
     columns:

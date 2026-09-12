@@ -135,11 +135,22 @@ unactivated venv fails at stage 2 with *[WinError 2] The system cannot find the 
 | `OMOP.PERSON` | 8,606 (Synthea 5,013 · METABRIC 2,509 · TCGA 1,084) |
 | `OMOP.CONDITION_OCCURRENCE` | 3,677 |
 | `OMOP.PROCEDURE_OCCURRENCE` | 3,471 |
+| `OMOP.OBSERVATION_PERIOD` | 5,013 (Synthea only — see below) |
 | `GENOMIC.SAMPLE_PERSON` | 3,593 |
 | `OMOP.DRUG_EXPOSURE` | 224 |
 | `OMOP.DEATH` | 13 |
 
-`dbt build` ends **PASS=90 WARN=1 ERROR=0** across 91 nodes, with no deprecation warnings.
+`dbt build` ends **PASS=105 WARN=1 ERROR=0** across 106 nodes, with no deprecation warnings.
+
+**OHDSI readiness.** `OBSERVATION_PERIOD` is the table ATLAS, Achilles and the Data Quality
+Dashboard bound their logic by: an event outside a person's period is invisible to them, and a
+person with no period is invisible entirely. It covers the 5,013 Synthea patients and **not**
+the 3,593 METABRIC and TCGA ones, because those sources carry no calendar date of any kind —
+only intervals like age at diagnosis and survival months. A period for them could only be
+invented, which is the same reasoning that declined a METABRIC death date. Point OHDSI tooling
+here and it will see the synthetic arm only; the real-source patients remain fully queryable in
+SQL. The reconciliation analysis reports this gap explicitly rather than leaving it to be
+discovered.
 
 **Three tables have nothing unmapped**: every row in `CONDITION_OCCURRENCE`, `OBSERVATION` and
 `DRUG_EXPOSURE` carries a real `concept_id`, not 0. That is the pay-off from the concept-map

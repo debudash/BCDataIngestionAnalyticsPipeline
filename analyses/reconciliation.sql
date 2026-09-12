@@ -139,6 +139,13 @@ report as (
              - (select count(*) from {{ ref('procedure_occurrence_deid') }}),
            'OMOP vs de-identified row count; delta must be 0'
     union all
+    select 3, 'deid', 'observation_period',
+           (select count(*) from {{ ref('observation_period') }}),
+           (select count(*) from {{ ref('observation_period_deid') }}),
+           (select count(*) from {{ ref('observation_period') }})
+             - (select count(*) from {{ ref('observation_period_deid') }}),
+           'OMOP vs de-identified row count; delta must be 0'
+    union all
     select 3, 'deid', 'mutations',
            (select count(*) from {{ ref('metabric_mutations') }})
              + (select count(*) from {{ ref('tcga_brca_mutations') }}),
@@ -147,6 +154,16 @@ report as (
              + (select count(*) from {{ ref('tcga_brca_mutations') }})
              - (select count(*) from {{ ref('mutations_deid') }}),
            'delta = mutations whose sample never resolved to a person; must be 0'
+
+    -- 3b. OHDSI readiness: a person with no observation period is invisible to ATLAS,
+    --     Achilles and the DQD, however complete their clinical data looks.
+    union all
+    select 3, 'ohdsi', 'observation_period coverage',
+           (select count(*) from {{ ref('person') }}),
+           (select count(*) from {{ ref('observation_period') }}),
+           (select count(*) from {{ ref('person') }})
+             - (select count(*) from {{ ref('observation_period') }}),
+           'delta = persons OHDSI tools cannot see; expected 3,593 dateless METABRIC + TCGA'
 
     -- 4. Totals: headline counts (no per-source split / delta).
     union all
