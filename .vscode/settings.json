@@ -1,6 +1,14 @@
 {
   // JSON formatting uses VS Code's built-in language support. No extension needed.
   // Shift+Alt+F formats the open document at any time.
+  // A markdown formatter running on save was re-padding tables and, in doing so, deleting
+  // the spaces next to inline code and emphasis: "via`CODE`" and "stage*demonstrates*".
+  // Prose here is hand-wrapped and reviewed in diffs, so formatting it on save costs
+  // correctness and buys nothing.
+  "[markdown]": {
+    "editor.formatOnSave": false
+  },
+
   "[json]": {
     "editor.defaultFormatter": "vscode.json-language-features",
     "editor.formatOnSave": true
